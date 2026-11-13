@@ -1,0 +1,25 @@
+# Kódminőség (26. blokk): ruff – a hibák és a gyanús minták kiszűrése, a túl bonyolult függvények jelzése.
+# Futtatás: python -m ruff check .        Javítható hibák: python -m ruff check . --fix
+line-length = 140
+target-version = "py312"
+
+# A kész (tanári) modulokat és a szerződésteszteket nem nézi – a te kódodat igen.
+extend-exclude = [
+    "tervellenor.py", "terv_biralat.py", "llm_kliens.py", "rag_meres.py", "*_futtat.py",
+    "src/app/agens.py", "src/app/eszkoztar.py", "src/app/vedelem.py", "src/app/llm_port.py", "src/app/rag.py",
+    "src/app/forgatokonyv.py", "src/app/validacio.py", "src/app/felulet.py", "src/app/meres.py", "src/app/promptok.py", "src/app/doksi.py", "src/app/kiadas.py", "src/app/megfeleles.py",
+    "tests/conftest.py", "tests/test_architektura.py", "tests/test_biztonsag.py", "tests/test_terv.py",
+    "tests/test_biralat.py", "tests/test_*_szerzodes.py",
+]
+
+[lint]
+# E, W: stílushibák · F: valódi hibák (nem használt import, nem létező név) · B: gyakori csapdák
+# C90: túl bonyolult függvény · UP: elavult szerkezet · SIM: egyszerűsíthető kód
+select = ["E", "F", "W", "B", "C90", "UP", "SIM"]
+ignore = [
+    "E741",   # l, I, O mint változónév – a magyar rövidítéseknél gyakori
+    "B008",   # Depends(...) az alapértékben: a FastAPI így működik
+]
+
+[lint.mccabe]
+max-complexity = 10
