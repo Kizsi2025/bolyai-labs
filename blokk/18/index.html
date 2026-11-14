@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 18. blokk: Specifikációból szoftver: a szoftvergyár</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../17/" style="color:#B8C4D6;text-decoration:none">← 17. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../19/" style="color:#B8C4D6;text-decoration:none">19. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 18. blokk</span>
+    <h1>Specifikációból szoftver: a szoftvergyár</h1>
+    <p>Egy rövid, példákkal megírt specifikáció be, egy kész, tesztelt függvény ki. Az eddigi blokkok építőelemeit kötitek össze egy gyártósorrá, párban: a teszteket nem a modell írja, a modell kódja csak biztonsági ellenőrzés után futhat, és a félbeszakadt gyártás onnan folytatódik, ahol abbamaradt.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#18</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Munkaforma: <b>párban</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-18-gyar">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/WyyP4MmyCN65aQy13CjE4b">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/17/">A 17. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/19/">A 19. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#gyartosor">A gyártósor</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="gyartosor" aria-labelledby="h-gyartosor">
+      <span class="eyebrow">Integrációs műhelymunka · két gyakorlati óra</span>
+      <h2 id="h-gyartosor">Öt állomás, négy ismerős</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Állomás</th><th scope="col">Mit csinál?</th><th scope="col">Honnan ismerős?</th><th scope="col">Ki írja?</th></tr></thead>
+          <tbody>
+            <tr><td><code>spec.py</code></td><td>a specifikáció beolvasása, tesztek a példákból – modell nélkül</td><td>8. blokk (tesztek)</td><td>ti: F1, F2</td></tr>
+            <tr><td>modell</td><td>az első kódváltozat a specifikációból</td><td>10. blokk (kliens)</td><td>kész</td></tr>
+            <tr><td><code>kapu.py</code></td><td>futtatás előtt: tiltott importok és hívások</td><td>15. blokk (kódkapu)</td><td>ti: F3</td></tr>
+            <tr><td><code>hurok.py</code></td><td>tesztfuttatás → hibakivonat → javítás → újra</td><td>16. blokk (önjavító hurok)</td><td>kész</td></tr>
+            <tr><td><code>allapot.py</code></td><td>uj → tesztek → kod → kesz / elakadt, mentéssel</td><td>17. blokk (állapotgép)</td><td>kész</td></tr>
+            <tr class="hl"><td><code>gyar.py</code></td><td>összeköti az állomásokat, folytatható módon</td><td>–</td><td>ti: F4</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>A teszt a szerződés</h3><p>A teszteket a specifikáció példáiból gépiesen állítjuk elő, és soha nem generáljuk újra. Ha a modell írná őket, a hibás kódjához illő, hibás teszteket is írhatna – a saját munkáját osztályozná.</p></div>
+        <div class="card"><h3>Olvasás futtatás előtt</h3><p>A modell kódja ismeretlen kód. A kapu az AST-ből látja, mit akar csinálni: <code>os</code>, <code>subprocess</code>, <code>open()</code>, <code>eval()</code> esetén nem fut le, a hurok a kapu üzenetét küldi vissza javításra.</p></div>
+      </div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #18 · Szoftvergyár</span>
+      <h2 id="h-kartya">Egy specifikáció be, egy tesztelt függvény ki</h2>
+      <div class="card story">„Termékvezetőként szeretném, ha egy rövid, példákkal megírt specifikációból a gyártósor magától állítaná elő a kész, tesztelt függvényt – úgy, hogy a teszteket ne a modell írja, a modell kódja csak biztonsági ellenőrzés után fusson, és ha a gyártás félbeszakad, onnan folytatódjon, ahol abbamaradt.”</div>
+      <div class="callout"><span class="eyebrow">Kulcs nélkül is végig</span><p>A <code>--demo</code> kapcsolóval a gyártósor a <code>demo/</code> mappa előre megírt modellválaszait használja: így mindenki ugyanazt látja, és nem kell API-kulcs. Élő modellel (a 10. blokk <code>.env</code>-jével) csak a végén próbáljátok ki, ha van kulcsotok.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · párban, 20 percenként csere</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és környezet</h3></div>
+          <div class="stepbody">
+            <p>Mindketten: a <a href="https://github.com/Kizsi2025/bolyai-labs-18-gyar">sablonrepón</a> <b>Use this template</b>, név <code>gyar-</code> + osztálykód + sorszám, <b>Public</b>. Aztán:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/gyar-13b-07.git
+cd gyar-13b-07
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>34 piros, 1 zöld. Nézd meg a <code>specek/kedvezmeny.md</code>-t: ilyen formátumú specifikációkat dolgoz fel a gyár.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>F1–F2: spec.py</h3></div>
+          <div class="stepbody">
+            <p><code>spec_olvas</code>: a <code>**Függvény:**</code> sorból a név és a fejléc, alatta a leírás, a <code>## Példák</code> és <code>## Hibák</code> szakasz <code>- `hívás` → `érték`</code> sorai. Hibás specifikációnál <code>ValueError</code> – a hívásban csak literál argumentum lehet (<code>_ellenoriz_hivas</code> kész). <code>teszt_general</code>: minden példából egy <code>test_pelda_i</code>, minden hibából egy <code>test_hiba_i</code>; float várt értéknél <code>pytest.approx</code>. A pontos kimenetet a <code>tests/test_spec.py</code> <code>VART_TESZT</code> szövege mutatja. <code>pytest tests/test_spec.py</code>: 12 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>F3: kapu.py</h3></div>
+          <div class="stepbody">
+            <p><code>biztonsagi_kapu(kod, nev)</code>: szintaktikai hibánál egyelemű lista; különben <code>ast.walk</code>-kal minden <code>Import</code>, <code>ImportFrom</code> és <code>ast.Name</code>-es hívás; végül: van-e a legfelső szinten <code>nev</code> nevű függvény. Ismétlés nélkül, előfordulási sorrendben. <code>pytest tests/test_kapu.py</code>: 10 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>F4: gyar.py – a gyártósor</h3></div>
+          <div class="stepbody">
+            <p>A <code>gyart</code> docstringjének öt lépése: specifikáció → <code>Gyartas</code> → tesztfájl (csak <code>uj</code> állapotban!) → első kód a modelltől (<code>tesztek</code> vagy <code>elakadt</code>) → <code>javito_hurok</code> <b>a kapuval</b> (<code>kod</code>) → állapot, jelentés, visszatérési szótár. <code>pytest tests/test_gyar.py</code>: 8 zöld. A <code>test_a_kapu_vedi_a_gepet</code> egy támadó kódot küld: ha nem adod át a kaput, lefut.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>F5: esettanulmány – GYARTAS.md</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python gyar.py specek/kedvezmeny.md --demo
+python gyar.py specek/tokenbecsles.md --demo
+python gyar.py specek/kerekit.md --demo</pre></div>
+            <p>Olvassátok el a <code>gyartas/&lt;név&gt;/JELENTES.md</code> fájlokat, és töltsétek ki a táblázatot. A <code>kerekit</code> elsőre zöld – próbáljátok ki: <code>python -c "print(round(2.5))"</code>. Egészítsétek ki a <code>specek/kerekit.md</code>-t egy új példával (<code>kerekit(2.5)</code> → <code>3</code>), és gyártsátok újra: <code>python gyar.py specek/kerekit.md --demo --ujra</code>. Válaszoljatok a három kérdésre. Mind a 35 teszt zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Élő gyártás (ha van kulcsod) és push</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python gyar.py specek/kedvezmeny.md --ujra
+git status
+git add spec.py kapu.py gyar.py GYARTAS.md specek
+git commit -m "feat: szoftvergyár specifikációból (feladatkártya #18)"
+git push</pre></div>
+            <p>Élőben hány kör kellett? Írt a modell a példákra szabott <code>if</code>-eket? Írd a <code>GYARTAS.md</code> végére. A <code>gyartas/</code> mappa és a <code>.env</code> <b>nem</b> lehet a <code>git status</code> listájában.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2,5 perc · felirattal</span>
+      <h2 id="h-video">A gyártósor VS Code-ban</h2>
+      <video controls preload="metadata" src="media/gyar_utmutato_18.mp4" aria-label="Videó: tesztgenerálás a specifikációból, biztonsági kapu, a gyártósor összekötése, a három demó, a kerekítési csapda és push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 18” futás mind a 35 tesztje sikeres. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Esettanulmány</td><td class="num">1</td><td>A <code>GYARTAS.md</code> táblázata és a három kérdésre adott érdemi válasz. Ezt a tanár értékeli.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: szoftvergyár specifikációból (feladatkártya #18)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz, a 2. óra végéig.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> saját, negyedik specifikáció a <code>specek/</code> mappába (legalább 5 példa és 1 hiba), élőben vagy saját demóválaszokkal (<code>demo/&lt;név&gt;/1.md</code>, <code>2.md</code>) legyártva.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>test_generalt_tesztfajl: eltér a szöveg</summary><div><p>A részek között pontosan <code>"\n\n\n"</code> (két üres sor), a fájl végén egy <code>"\n"</code>. Hasonlítsd össze a <code>VART_TESZT</code> szöveggel.</p></div></details>
+      <details><summary>A -1.5-re nincs pytest.approx</summary><div><p><code>isinstance(ast.literal_eval(p["vart"]), float)</code> – a negatív számot is literálként értelmezi.</p></div></details>
+      <details><summary>A függvényen belüli import átmegy a kapun</summary><div><p>Ne csak a <code>fa.body</code>-t nézd: <code>ast.walk(fa)</code> minden szintet bejár.</p></div></details>
+      <details><summary>Az import os.path átmegy a kapun</summary><div><p>Az első névrészt vizsgáld: <code>a.name.split(".")[0]</code>.</p></div></details>
+      <details><summary>test_a_tesztfajl_a_szerzodes piros</summary><div><p>A tesztfájlt csak <code>uj</code> állapotban írd. Ha már létezik, az a szerződés.</p></div></details>
+      <details><summary>test_a_kapu_vedi_a_gepet: létrejött a betores.txt</summary><div><p>A huroknak add át a kaput: <code>javito_hurok(..., kapu=lambda k: biztonsagi_kapu(k, spec["nev"]))</code>.</p></div></details>
+      <details><summary>A kerekit a javítás után is 1 kör</summary><div><p>A régi gyártás megmaradt (a teszt a szerződés!). Használd a <code>--ujra</code> kapcsolót.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miért nem a modell írja a teszteket a gyártósorban?</li>
+        <li>Miért csak literál argumentum lehet a specifikáció példáiban?</li>
+        <li>Miért lett zöld a hibás kerekítés, és mit kellett javítani: a kódot vagy a specifikációt?</li>
+        <li>Mi történik, ha a gyártás a „kod” állapotban szakad meg, és miért nem hívjuk ilyenkor újra a modellt?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 19. blokk</span><h3 style="margin-top:8px">Red team – Prompt injection-verseny</h3><p>Ma a kapu azt figyelte, mit akar a modell kódja csinálni. Jövő héten a támadó oldalára álltok: mit tehet egy rosszindulatú bemenet egy ágenssel, és hogyan védekezünk ellene.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk18-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 16. blokk: Önjavító kód és Senior rangemelő mérés</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../15/" style="color:#B8C4D6;text-decoration:none">← 15. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../17/" style="color:#B8C4D6;text-decoration:none">17. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 16. blokk · 3. modulzáró</span>
+    <h1>Önjavító kód és Senior rangemelő mérés</h1>
+    <p>Az önjavító ágenshurok tesztet futtat, kiolvassa a hibát, javítást kér a modelltől, és újra futtat – amíg zöld nem lesz, vagy le nem kell állnia. Az 1. órán te vagy a hurok, a 2. órán a Senior mérésen programból építed meg.</p>
+    <div class="facts">
+      <span class="fact">1. óra: <b>gyakorlás</b></span>
+      <span class="fact">2. óra: <b>Senior mérés, 40 perc</b></span>
+      <span class="fact"><b>10 pont</b>, Seniorhoz legalább 6</span>
+      <span class="fact">Mérés alatt: <b>MI nélkül</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-16-gyakorlo">A gyakorló sablon</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/VnfVp1VL3aNfMQqxSQZW4d">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/15/">A 15. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/17/">A 17. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#hurok">A hurok</a>
+    <a href="#lepesek">1. óra</a>
+    <a href="#video">Videó</a>
+    <a href="#meres">2. óra: mérés</a>
+    <a href="#ertekeles">Értékelés</a>
+    <a href="#hibak">Ha elakadsz</a>
+  </nav>
+
+  <main>
+    <section id="hurok" aria-labelledby="h-hurok">
+      <span class="eyebrow">Amit tudnod kell</span>
+      <h2 id="h-hurok">Futtasd, olvasd, javítsd – amíg zöld</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Lépés</th><th scope="col">Mire figyelj?</th></tr></thead>
+          <tbody>
+            <tr><td>Futtatás</td><td>a modell által írt kód idegen kód: külön folyamatban, ideiglenes mappában, időkorláttal, API-kulcs nélkül fusson</td></tr>
+            <tr><td>Kivonat</td><td>a javításhoz csak a hasznos sorok kellenek (<code>E …</code>, <code>FAILED …</code>), és nem túl sok belőlük</td></tr>
+            <tr><td>Javítás</td><td>a modell válaszából a kódot ki kell nyerni és ellenőrizni; a tesztet a modell nem módosíthatja</td></tr>
+            <tr class="hl"><td>Megállás</td><td>siker · elfogyott a körök száma · a modell körbe jár (ugyanazt adja vissza) · nem ad értelmes kódot</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">1. óra · gyakorlás · nem jár ponttal</span>
+      <h2 id="h-lepesek">Te vagy a hurok</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Gyakorló repó és környezet</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-16-gyakorlo">gyakorló sablonon</a>: <b>Use this template</b>, név <code>hurok-</code> + osztálykód + sorszám. Aztán:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/hurok-13b-07.git
+cd hurok-13b-07
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>7 piros, 4 zöld. A <code>feladatok/</code> mappában négy hibás függvény, a <code>tests/</code> mappában a tesztjeik.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>Az első kör: a hiba kiolvasása</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest tests/test_kvota.py -q</pre></div>
+            <p>A hosszú kimenetből a javításhoz az <code>E</code> kezdetű sorok (mi nem stimmelt) és a <code>FAILED</code> sorok (melyik teszt) kellenek. Ezt add oda az MI-asszisztensnek (Copilot Chat vagy Gemini), a függvény kódjával együtt.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>A második kör: javítás és újra</h3></div>
+          <div class="stepbody">
+            <p>Alkalmazd a javaslatot, és futtasd újra ugyanazt a tesztet. Ha még piros: új kör. Minden kört írj be a <code>HUROK_NAPLO.md</code>-be (a hiba lényege egy sorban, mit kértél, zöld lett-e).</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>A maradék három feladat</h3></div>
+          <div class="stepbody">
+            <p><code>szoszamlalo</code>, <code>kereses</code>, <code>jelszo</code> – ugyanígy. A <code>kereses</code> tesztje 5 másodperc után „Timeout”-tal bukik: ez végtelen ciklus, a pytest-timeout állítja le. Gondold végig: mi lenne időkorlát nélkül?</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>A csapda: a teszt érinthetetlen</h3></div>
+          <div class="stepbody">
+            <p>Ha a modell azt javasolja, hogy írd át a tesztet: ne tedd. A <code>test_tesztek_valtozatlanok</code> teszt figyeli a tesztfájlokat. A követelmény a docstringben és a tesztben van – a kód a hibás. Ha mégis átírtad: <code>git checkout tests/</code>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Napló, push</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest -q
+git add .
+git commit -m "gyakorlas: kézi önjavító hurok"
+git push</pre></div>
+            <p>11 zöld. Válaszolj a <code>HUROK_NAPLO.md</code> négy kérdésére – a 2. órai mérés F5 feladatában hasonlókat kérdezünk.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">A kézi hurok és a mérés menete</h2>
+      <video controls preload="metadata" src="media/hurok_utmutato_16.mp4" aria-label="Videó: kézi önjavító hurok a gyakorló repóban, időkorlát, a teszt-csapda, és a Senior mérés indulása és beadása"></video>
+    </section>
+
+    <section id="meres" aria-labelledby="h-meres">
+      <span class="eyebrow warn">2. óra · Senior rangemelő mérés · egyéni munka, 40 perc</span>
+      <h2 id="h-meres">Építsd meg a hurkot programból</h2>
+      <div class="callout"><span class="eyebrow">Szabályok</span><p><b>MI-asszisztens (Copilot, chat) a mérés alatt nem használható.</b> Használhatod a saját korábbi repóidat, a Python- és a pytest-dokumentációt. A sablont a tanár a 2. óra elején osztja meg.</p></div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Feladat</th><th scope="col">Hol?</th><th scope="col">Pont</th></tr></thead>
+          <tbody>
+            <tr><td>F1 Tesztfuttatás elszigetelten, időkorláttal</td><td><code>futtat_teszteket</code></td><td class="num">2</td></tr>
+            <tr><td>F2 Hibakivonat a pytest-kimenetből</td><td><code>hiba_kivonat</code></td><td class="num">2</td></tr>
+            <tr><td>F3 Kód kinyerése a modell válaszából</td><td><code>kod_kinyer</code></td><td class="num">2</td></tr>
+            <tr><td>F4 A javító hurok, megállási feltételekkel</td><td><code>javito_hurok</code></td><td class="num">2</td></tr>
+            <tr><td>F5 Szöveges értékelés (4 kérdés)</td><td><code>SENIOR_ERTEKELES.md</code></td><td class="num">2</td></tr>
+            <tr class="total"><td>Összesen</td><td></td><td class="num">10</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A részletes leírás minden függvény docstringjében van. Az F1–F4-et a CI teszteli (minden zöld teszt 2 pont, részpont nincs); az F4 tesztje az F1–F3-tól függetlenül fut. Az F5-öt a tanár értékeli.</p>
+      <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/senior-13b-07.git
+cd senior-13b-07
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python -m pytest ellenor        # az elején 4 piros
+
+# a végén:
+git add .
+git commit -m "meres: Senior rangemelő mérés"
+git push</pre></div>
+      <p>Az Actions fülön a <b>Senior meres</b> futás tesztlistája mutatja a pontjaidat. A repó linkjét add be a Teams-feladatba.</p>
+    </section>
+
+    <section id="ertekeles" aria-labelledby="h-ertekeles">
+      <span class="eyebrow">Rangemelés</span>
+      <h2 id="h-ertekeles">Mikor leszel Senior?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Pont</th><th scope="col">Eredmény</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td class="num">8–10</td><td>Senior fejlesztő – kiváló</td></tr>
+            <tr><td class="num">6–7</td><td>Senior fejlesztő</td></tr>
+            <tr><td class="num">0–5</td><td>Medior maradsz – egy javítási lehetőséged van</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Ha a <code>.env</code> fájl vagy egy kulcs felkerül a GitHubra, a mérés érvénytelen.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz (gyakorlás)</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>A kereses tesztje „Timeout”-tal bukik</summary><div><p>Ez a várt viselkedés: végtelen ciklus. A pytest-timeout 5 másodperc után leállítja. Nézd meg, változik-e a ciklusban az <code>also</code>.</p></div></details>
+      <details><summary>test_tesztek_valtozatlanok piros</summary><div><p>Átírtál egy tesztfájlt. Állítsd vissza: <code>git checkout tests/</code>, és a kódot javítsd.</p></div></details>
+      <details><summary>A modell szerint a teszt hibás</summary><div><p>Olvasd el a függvény docstringjét: az a követelmény. Ha a teszt és a docstring egyezik, a kód a hibás.</p></div></details>
+      <details><summary>ModuleNotFoundError: feladatok</summary><div><p>A repó gyökeréből futtasd a pytestet (<code>python -m pytest</code>), ne a <code>tests</code> mappából.</p></div></details>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk16-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

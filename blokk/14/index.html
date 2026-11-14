@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 14. blokk: Csapatépítés gépeknek: többágenses szerepek</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../13/" style="color:#B8C4D6;text-decoration:none">← 13. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../15/" style="color:#B8C4D6;text-decoration:none">15. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 14. blokk</span>
+    <h1>Csapatépítés gépeknek: többágenses szerepek</h1>
+    <p>A 13. blokk ágense mindent egyedül csinált. Most szétosztjuk a munkát: Kutató, Tervező, Programozó és Tesztelő ágens – mindegyik a saját céljával, határaival és eszközeivel. A szerepeket a CrewAI keretrendszer YAML-fájljaiban írjátok le.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#14</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Keretrendszer: <b>CrewAI</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-14-csapat">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/LgFe7rAnygZa31Pt3LN82W">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/13/">A 13. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/15/">A 15. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">Egy ágens vagy egy csapat?</h2>
+      <div class="grid2">
+        <div class="card"><h3>Miért csapat?</h3><p>Független ellenőrzés (a Tesztelő a specifikációból dolgozik, nem a kódból), rövidebb és élesebb promptok, szűkebb jogosultság. Az ára: több hívás, több idő, és a lánc elején elkövetett hiba végigfut a csapaton.</p></div>
+        <div class="card"><h3>Jó szerepleírás</h3><p>Egyértelmű cél (mit ad át a csapatnak), világos határ (mit NEM csinál), ismert bemenet (kitől kap) és kimenet (kinek, milyen formában), és csak a munkájához kellő eszközök.</p></div>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">CrewAI</th><th scope="col">Mezők</th><th scope="col">Mi lesz belőle?</th></tr></thead>
+          <tbody>
+            <tr><td>Agent</td><td><code>role</code>, <code>goal</code>, <code>backstory</code>, <code>tools</code>, <code>llm</code></td><td>rendszerprompt: „You are {role}. {backstory} Your personal goal is: {goal}”</td></tr>
+            <tr><td>Task</td><td><code>description</code>, <code>expected_output</code>, <code>agent</code>, <code>context</code></td><td>felhasználói üzenet, a context feladatainak eredményével</td></tr>
+            <tr class="hl"><td>Crew</td><td><code>agents</code>, <code>tasks</code>, <code>process</code></td><td>a csapat; ma sorban dolgozik (a 15. blokkban jön a többi folyamat)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #14 · 2. óra · CrewAI szerepkör kiosztás</span>
+      <h2 id="h-kartya">Világos szerepek, szűk jogosultságok</h2>
+      <div class="card story">„Fejlesztési vezetőként szeretnék egy ágenscsapatot, amelyben mindenkinek világos a szerepe: a Kutató tényeket gyűjt, a Tervező specifikál, a Programozó kódol, a Tesztelő ellenőriz – és mindenki csak azokhoz az eszközökhöz fér hozzá, amelyek a munkájához kellenek.”</div>
+      <div class="callout"><span class="eyebrow">Hogyan tesztel a CI kulcs nélkül?</span><p>A CI <b>valódi CrewAI-t</b> futtat, de valódi modell helyett egy <b>ál-LLM-szerverrel</b>. Ez a rendszerpromptból látja, melyik szerep kérdezi: a Programozónak egy <code>fajl_ir</code> eszközhívással válaszol, így a CrewAI tényleg elmenti a fájlt. A teszt azt is ellenőrzi, hogy a context továbbadja-e az előző ágens munkáját, és hogy mindenki pontosan a kiosztott eszközeit látja-e.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · VS Code-ban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és Python 3.12-es környezet</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-14-csapat">sablonrepón</a>: <b>Use this template</b>, név <code>csapat-</code> + osztálykód + sorszám, <b>Public</b>. A CrewAI-hoz <b>Python 3.12</b> kell, és a telepítés percekig tart – indítsd el minél előbb:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/csapat-13b-07.git
+cd csapat-13b-07
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>16 piros, 11 zöld (a zöldek a kész kódot ellenőrzik). Ha a pip nagyon lassú: <code>pip install uv</code>, aztán <code>uv pip install -r requirements.txt</code>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>A szerepek: config/agents.yaml</h3></div>
+          <div class="stepbody">
+            <p>Mind a négy szerepnél: <code>role</code> (ki ő), <code>goal</code> (mit ad át a csapatnak – legalább egy rendes mondat), <code>backstory</code> (hogyan dolgozik, és mit <b>nem</b> csinál). Az 1. órai szerepkártyákból dolgozz. Utána nézd meg, mi lett belőle:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python csapat.py --szerepek</pre></div>
+            <p><code>tests/test_szerepek.py</code>: zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>A feladatlánc: config/tasks.yaml</h3></div>
+          <div class="stepbody">
+            <p>Minden feladatnál <code>description</code> (mit csináljon), <code>expected_output</code> (pontosan milyen formájú eredményt), és <code>context</code> (kinek a munkáját kapja meg). A kutatás leírásában maradjon benne a <code>{feladat}</code>; a kód és a teszt feladat nevezze meg a <code>dij.py</code>, <code>test_dij.py</code> fájlt és a <code>fajl_ir</code> eszközt. <code>tests/test_feladatok.py</code>: zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>A jogosultságok: config/jogosultsagok.yaml</h3></div>
+          <div class="stepbody">
+            <p>Öt eszköz van: <code>tudastar_kereses</code>, <code>wiki_kereses</code>, <code>szamol</code>, <code>fajl_olvas</code>, <code>fajl_ir</code>. Mindenki csak azt kapja, ami a szerepéhez kell. Írni csak annak lehet, akinek tényleg menteni kell. Ezután zöld a <code>tests/test_csapat.py</code> is: a csapat egy ál-LLM-mel végigfut, a Programozó elmenti a <code>dij.py</code>-t.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Az indoklás: SZEREPEK.md</h3></div>
+          <div class="stepbody">
+            <p>Töltsd ki a szerepkör-mátrixot (mit csinál, mit nem, milyen eszközt kap és miért), és válaszolj két kérdésre: miért nem egyetlen ágens? Mi történik, ha a lánc elején hiba van? Mind a 27 teszt zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Élő futás (ha van kulcsod) és push</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python csapat.py "díjszámító függvény a havi tokenhasználatból"
+git status
+git add config SZEREPEK.md
+git commit -m "feat: ágenscsapat szerepkörei (feladatkártya #14)"
+git push</pre></div>
+            <p>Az eredmény a <code>munkaterulet/kimenet/</code> mappában lesz. A tapasztalatot írd a <code>SZEREPEK.md</code> végére: melyik ágens lépett ki a szerepéből, és mit írnál át a leírásán? A <code>.env</code> nem lehet a <code>git status</code> listájában.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">A teljes folyamat VS Code-ban</h2>
+      <video controls preload="metadata" src="media/csapat_utmutato_14.mp4" aria-label="Videó: CrewAI telepítése, szerepek és feladatok YAML-ban, jogosultságok, tesztek és push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 14” futás mind a 27 tesztje sikeres. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Szerepkör-mátrix</td><td class="num">1</td><td>A <code>SZEREPEK.md</code> tartalmilag is megalapozott: indokolt eszközválasztás, érdemi válasz a két kérdésre. Ezt a tanár értékeli.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: ágenscsapat szerepkörei (feladatkártya #14)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz, a 2. óra végéig.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> ötödik szerep, „Dokumentáló” (README a díjszámítóhoz) – külön git-ágon, mert a tesztek pontosan a négy alapszerepet várják.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>A pip install nagyon sokáig tart</summary><div><p>A CrewAI sok csomagot telepít. Indítsd az óra elején, vagy: <code>pip install uv</code>, aztán <code>uv pip install -r requirements.txt</code>.</p></div></details>
+      <details><summary>Telepítési hiba Python 3.13-mal vagy 3.14-gyel</summary><div><p>Python 3.12-es venv kell: <code>py -3.12 -m venv .venv</code>.</p></div></details>
+      <details><summary>yaml.scanner.ScannerError</summary><div><p>Behúzási hiba: két szóköz kell, tabulátor nem lehet; a <code>&gt;</code> utáni sorok egyforma behúzással.</p></div></details>
+      <details><summary>KeyError a csapat.py-ban</summary><div><p>Elírt kulcs (kutato, terv …) vagy elírt név az <code>agent</code> / <code>context</code> mezőben.</p></div></details>
+      <details><summary>test_context_lanc: csak korábbi feladatra hivatkozhat</summary><div><p>A sorrend: kutatas, terv, kod, teszt. A context csak a feladat előtti feladatokra mutathat.</p></div></details>
+      <details><summary>test_hatarok: írd le a szerep határát is</summary><div><p>A goal-ban vagy a backstoryban legyen benne, mit <b>nem</b> csinál a szerep, vagy hogy <b>csak</b> mit csinál.</p></div></details>
+      <details><summary>Élőben 429-es hiba</summary><div><p>Négy ágens sok hívást küld; várj egy percet, vagy adj kisebb feladatot.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miért jobb, ha a teszteket nem ugyanaz az ágens írja, amelyik a kódot?</li>
+        <li>Mi lesz a CrewAI-ban a role, a goal és a backstory mezőkből?</li>
+        <li>Mit csinál a context egy feladatnál?</li>
+        <li>Melyik szerepnek adtál írásjogot, és miért csak neki?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 15. blokk</span><h3 style="margin-top:8px">Munkamegosztás – Ágens-munkafolyamatok</h3><p>Ma a csapat sorban dolgozott. Jövő héten: vezető ágens, aki maga osztja ki a munkát, és visszaküldés a Programozónak, ha a teszt elbukik.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk14-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

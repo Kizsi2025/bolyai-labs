@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 25. blokk: Projektfejlesztés V.: tesztelés és validáció</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../24/" style="color:#B8C4D6;text-decoration:none">← 24. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../26/" style="color:#B8C4D6;text-decoration:none">26. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 25. blokk</span>
+    <h1>Projektfejlesztés V.: tesztelés és validáció</h1>
+    <p>A rendszered működik, ha minden rendben megy. Ebben a sprintben azt nézed meg, mit csinál, ha valami nincs rendben: ha a modell forrás nélkül állít, nem létező forrást idéz, veszélyes eszközt hív, körbe-körbe keres, vagy egyszerűen nem érhető el. A 2. órában egy másik csapat megpróbálja eltörni.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#25</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Kulcs: <b>nem kell</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-25-minoseg">A minőség-csomag</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/8WJ5w1wSYbV2yHisUCoaEQ">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/24/">A 24. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/26/">A 26. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#forgatott">A forgatott modell</a>
+    <a href="#esetek">Viselkedési esetek</a>
+    <a href="#keresztteszt">Keresztteszt</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="forgatott" aria-labelledby="h-forgatott">
+      <span class="eyebrow">Sprintcél: tudjuk, mit csinál, ha baj van</span>
+      <h2 id="h-forgatott">Hogyan tesztelsz valamit, ami minden futáskor mást mond?</h2>
+      <p>Sehogy. A modellt <b>forgatod</b>: a tesztben pontosan azt lépi, amit előírsz. A rendszered többi része viszont valódi: az API, a szolgáltatás, az ágens, a védelmi rétegek, a RAG és az adatbázis. Így nem a modellt teszteled, hanem a kódodat a modell körül. A rossz viselkedés is megismételhető, ezért a CI-ben is ellenőrizhető.</p>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Fájl</th><th scope="col"></th></tr></thead>
+          <tbody>
+            <tr><td><code>src/app/validacio.py</code></td><td>kész: a forgatott modell, a rögzítő (feljegyzi, mi került a modell elé) és az esetek futtatója</td></tr>
+            <tr><td><code>validacio_futtat.py</code></td><td>kész: <code>python validacio_futtat.py</code>, vagy <code>--elo --ismetles 5</code> a valódi modellel (ez nem fut a CI-ben)</td></tr>
+            <tr><td><code>.github/ISSUE_TEMPLATE/hiba.md</code></td><td>kész: hibajegy-sablon a keresztteszthez</td></tr>
+            <tr class="hl"><td><code>validacio.yaml</code></td><td><b>a te részed:</b> legalább 8 eset, mind a 4 kategóriából, ebből legalább 2 támadás</td></tr>
+            <tr class="hl"><td><code>requirements.txt</code>, <code>ci.yml</code></td><td><b>a te részed:</b> a lefedettségi kapu (legalább 70%)</td></tr>
+            <tr class="hl"><td><code>tests/test_sajat_regresszio.py</code></td><td><b>a te részed:</b> regressziós teszt a keresztteszten talált hibára</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="esetek" aria-labelledby="h-esetek">
+      <span class="eyebrow">1. óra</span>
+      <h2 id="h-esetek">Négy kategória, legalább 8 eset</h2>
+      <div class="grid2">
+        <div class="card"><h3><code>helyes</code> · <code>hatar</code></h3><p><b>Helyes:</b> a boldog út, vagyis forrással érkezik a válasz. <b>Határ:</b> a modell téved. Nincs találat; olyan forrást idéz, amit nem talált; vagy 20-szor keres egymás után (<code>ismetel: 20</code>), és a ciklusnak le kell állnia.</p></div>
+        <div class="card"><h3><code>tamadas</code> · <code>hiba</code></h3><p><b>Támadás:</b> injekció a kérdésben, veszélyes eszköz jóváhagyás nélkül, nem létező eszköz, hamis forrás. <b>Hiba:</b> a modell nem érhető el (<code>- hiba: "HTTP 429"</code>), vagy hibás a bemenet (422).</p></div>
+      </div>
+      <div class="code"><button class="copy" type="button">Másolás</button><pre>  - nev: Olyan forrást idéz, amit nem talált
+    kategoria: hatar
+    kerdes: "Mi a teendő, ha elkések?"
+    lepesek:
+      - hivas: {nev: kereses_hazirendben, kerdes: "késés"}
+      - szoveg: "Azonnali felfüggesztés jár. [hazirend.md#7]"
+    elvaras:
+      mezok: {nem_tudom: true}
+      nem_tartalmaz: ["felfüggesztés"]</pre></div>
+      <p>Az elvárások: <code>statusz</code>, <code>mezok</code>, <code>tartalmaz</code>, <code>nem_tartalmaz</code>, <code>kontextusban</code> és <code>kontextusban_nincs</code> (vagyis mi került a modell elé), valamint <code>llm_hivasok_max</code>. A futtató minden esetnél magától is ellenőrzi, hogy az API-kulcs nem került-e a modell elé.</p>
+      <div class="callout"><span class="eyebrow">Ha egy eset piros</span><p>Ha az elvárásod jó, akkor a kódodban van a hiba: azt javítsd, ne az esetet. Az elérhetetlen modell szinte mindenkinél 500-as hibát ad elsőre. A javítás: a szolgáltatás-réteg elkapja a modellhívás hibáját, az API pedig 503-at ad érthető <code>detail</code>-lel.</p></div>
+    </section>
+
+    <section id="keresztteszt" aria-labelledby="h-keresztteszt">
+      <span class="eyebrow">2. óra</span>
+      <h2 id="h-keresztteszt">Egy másik csapat próbálja eltörni</h2>
+      <p>A tanár párokat jelöl ki. 15 percig a másik csapat rendszerét teszteled: furcsa bemenettel, nagyon hosszú szöveggel, injekcióval, dupla kattintással, rossz azonosítóval. Minden hibát hibajegyként írsz be <b>a másik csapat</b> repójába (Issues → New issue → „Hiba (keresztteszt)”). Utána a saját hibajegyeitekből legalább egyet kijavítotok, regressziós teszttel.</p>
+      <div class="grid2">
+        <div class="card"><h3>Jó hibajegy</h3><p>Lépések, amelyekkel a hiba megismételhető; mit vártál; mi történt helyette; súlyosság és kategória. A „nem működik” nem hibajegy.</p></div>
+        <div class="card"><h3>Regressziós teszt</h3><p>A neve <code>test_regresszio_…</code>, a docstringjében a hibajegy száma (<code>#1</code>). A javítás commitja is hivatkozzon rá: <code>fix: … (#1)</code>.</p></div>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · egy sprint</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál. A böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>A csomag bemásolása</h3></div>
+          <div class="stepbody">
+            <p>Töltsd le a <a href="https://github.com/Kizsi2025/bolyai-labs-25-minoseg">csomagot</a>, és másold a repód gyökerébe. Ha GitHubról töltöd le, a mappa neve <code>…-main</code> lesz.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>Expand-Archive ..\bolyai-labs-25-minoseg.zip ..\csomag25
+Copy-Item ..\csomag25\bolyai-labs-25-minoseg\* . -Recurse -Force
+python -m pip install pytest-cov
+python -m pytest -q</pre></div>
+            <p>Most 5 teszt piros.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>Viselkedési esetek</h3></div>
+          <div class="stepbody">
+            <p>Írd át a <code>validacio.yaml</code>-t, és töröld belőle a <code>pelda:</code> sort. Legyen benne legalább 8 eset, mind a 4 kategóriából, ebből legalább 2 támadás. Kell egy <code>kontextusban…</code>, egy <code>llm_hivasok_max</code> és egy elérhetetlen modell (<code>- hiba:</code>).</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python validacio_futtat.py</pre></div>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>A talált hibák javítása</h3></div>
+          <div class="stepbody">
+            <p>Ahol egy eset piros, de az elvárás jó, ott a kódot javítsd. A leggyakoribb eset az elérhetetlen modell: a szolgáltatás-rétegben kapd el a hibát, az API pedig adjon 503-at.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Lefedettségi kapu</h3></div>
+          <div class="stepbody">
+            <p>A <code>requirements.txt</code> végére írd be: <code>pytest-cov</code>. A <code>.github/workflows/ci.yml</code> utolsó sora ez legyen:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>      - run: python -m pytest -v --cov=src/app --cov-report=term-missing --cov-fail-under=70</pre></div>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Keresztteszt és regresszió</h3></div>
+          <div class="stepbody">
+            <p>Írj hibajegyet a másik csapatnak. A saját hibajegyeitekből legalább egyet javítsatok ki, és írjatok rá egy <code>test_regresszio_…</code> tesztet a <code>tests/test_sajat_regresszio.py</code>-ba, a docstringben a hibajegy számával.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Napló és push</h3></div>
+          <div class="stepbody">
+            <p>A <code>HALADAS.md</code> végére írd be a „## 25. blokk – Tesztelés és validáció” részt, benne a <b>Lefedettség:</b> (százalékkal) és a <b>Keresztteszt:</b> sorral. A minta a MINOSEG.md végén van.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest -q --cov=src/app
+git add .
+git status
+git commit -m "test: viselkedési esetek és lefedettségi kapu (feladatkártya #25)"
+git push</pre></div>
+            <p>A <code>git status</code> listájában a <code>.env</code> nem szerepelhet.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">Esetek, javítás, kapu, regresszió</h2>
+      <video controls preload="metadata" src="media/minoseg_utmutato_25.mp4" aria-label="Videó: a csomag bemásolása, viselkedési esetek, egy eset hibát talál, a javítás, lefedettségi kapu, regressziós teszt"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Záró projekt” futás minden tesztje zöld, köztük a minőségi szerződés, és a lefedettségi kapun is átmegy. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Keresztteszt</td><td class="num">1</td><td>Hibajegyet írtál a másik csapatnak (megismételhető lépésekkel), és a saját hibajegyeitekből legalább egyet kijavítottatok, regressziós teszttel.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>test: viselkedési esetek és lefedettségi kapu (feladatkártya #25)</code>, és a javítás commitja hivatkozik a hibajegyre.</td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>A 2. óra végén érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary><code>KeyError: 'nev'</code></summary><div><p>A <code>hivas:</code> alá kell az eszköz neve is: <code>hivas: {nev: kereses, kerdes: "…"}</code>.</p></div></details>
+      <details><summary>Egy eset neve <code>#</code>-nál elfogy</summary><div><p>YAML-ban a <code>#</code> megjegyzést kezd. Tedd az egész nevet idézőjelbe.</p></div></details>
+      <details><summary>„a modellnek küldött üzenetekben nincs benne”</summary><div><p>A <code>kontextusban</code> betű szerint keres, kis- és nagybetűt is megkülönböztet. Nézd meg, pontosan mit ad vissza az eszközöd.</p></div></details>
+      <details><summary>500-as hiba az elérhetetlen modellnél</summary><div><p>Pont ezt a hibát találta meg az eset. Kapd el a modellhívás hibáját a szolgáltatás-rétegben, az API pedig adjon 503-at <code>detail</code>-lel.</p></div></details>
+      <details><summary>„Required test coverage of 70% not reached”</summary><div><p>A <code>--cov-report=term-missing</code> kiírja a lefedetlen sorokat. Írj tesztet a hibakezelő ágakra, és ne a kaput csökkentsd.</p></div></details>
+      <details><summary>Nincs „Hiba (keresztteszt)” sablon a GitHubon</summary><div><p>A <code>.github/ISSUE_TEMPLATE/hiba.md</code> nem került fel a repóba. Másold át, és pushold.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">A 2. óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Melyik viselkedési eseted talált valódi hibát a kódodban, és mi volt az?</li>
+        <li>Miért forgatjuk a modellt a CI-ben, és mit nem tudunk meg így?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 26. blokk</span><h3 style="margin-top:8px">Projektfejlesztés VI.: javítás és hangolás</h3><p>Hibajavítás, prompt-optimalizálás, teljesítményhangolás. A nyitva maradt hibajegyekkel kezdünk.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk25-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

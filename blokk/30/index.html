@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 30. blokk: Demo Day I.: bemutató és védés</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+.quiz { display: grid; gap: 14px; }
+.qitem { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 0; display: grid; gap: 6px; }
+.qitem legend { font-weight: 600; color: var(--ink); padding: 0 4px; }
+.qitem label { display: block; cursor: pointer; color: var(--body); }
+.fb { margin: 4px 0 0; font-size: 15px; }
+.fb.ok { color: var(--accent); }
+.fb.no { color: var(--warn); }
+.quizbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.quizbar .btn.ghost { color: var(--ink); border-color: var(--line); }
+#quiz-score { font-weight: 700; color: var(--ink); }
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../29/" style="color:#B8C4D6;text-decoration:none">← 29. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../31/" style="color:#B8C4D6;text-decoration:none">31. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 30. blokk · 4. modul</span>
+    <h1>Demo Day I.: bemutató és védés</h1>
+    <p>Élőben bemutatjátok a működő projekteteket a bizottságnak és az osztálynak, utána szóban megvéditek. A 30. blokk maga a bemutató, ezért <b>a felkészülés előtte kész legyen</b>: forgatókönyv, főpróba, védési felkészülés, címke a bemutatott változaton.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#30</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b> + bizottsági pontok</span>
+      <span class="fact">Határidő: <b>a blokk előtti nap 20:00</b></span>
+      <span class="fact">Súly: <b>a tantárgy 40%-a</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-30-demoday">A Demo Day-csomag</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/96CcMgdThDPpxYG2avmPnN">A nap diasora</a>
+      <a class="btn ghost" href="../../blokk/29/">A 29. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/31/">A 31. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#menet">A bemutató menete</a>
+    <a href="#forgatokonyv">A forgatókönyv</a>
+    <a href="#vedes">A védés</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#nap">A bemutató napján</a>
+    <a href="#hibak">Ha elakadsz</a>
+  </nav>
+
+  <main>
+    <section id="menet" aria-labelledby="h-menet">
+      <span class="eyebrow">Egy pár · 14 perc</span>
+      <h2 id="h-menet">A bemutató menete</h2>
+      <div class="rules">
+        <div class="rule"><b>7 perc</b><p>bemutató: egy felhasználó útja, ketten felváltva. 6 percnél jelzés, 7-nél vége.</p></div>
+        <div class="rule"><b>5 perc</b><p>védés: egy kódkérdés, aztán 2–3 kérdés, mindkettőtöknek külön.</p></div>
+        <div class="rule"><b>1 perc</b><p>visszajelzés: a bizottság, és a közönség Teams Formsban.</p></div>
+        <div class="rule"><b>B-terv</b><p>ha élőben valami nem megy: 1 percen belül a terv. Ez nem pontlevonás.</p></div>
+      </div>
+      <p>Ma hat pár kerül sorra, a többiek a 31. blokk elején – a sorrendet a sorsolás dönti el. A határidő mindenkinek ugyanaz.</p>
+    </section>
+
+    <section id="forgatokonyv" aria-labelledby="h-forgatokonyv">
+      <span class="eyebrow">demo.yaml</span>
+      <h2 id="h-forgatokonyv">Egy felhasználó, egy történet</h2>
+      <p>A bemutatón nem kódot írtok, hanem megmutatjátok, kinek és hogyan segít a rendszeretek. A lépések ugyanúgy néznek ki, mint az <code>integracio.yaml</code>-ban, plusz ki mutatja, mit mondotok közben, és mennyi időt szántok rá.</p>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Rész</th><th scope="col">Mi van benne?</th><th scope="col">Idő (minta)</th></tr></thead>
+          <tbody>
+            <tr><td>Nyitás (<code>nyitas_mp</code>)</td><td>kinek készült, mi a gondja – még kód nélkül</td><td class="num">50 mp</td></tr>
+            <tr><td>Lépések (<code>lepesek</code>)</td><td>4–6 lépés, mindegyiknél <code>ki</code>, <code>mondjuk</code>, <code>mp</code>; ketten felváltva</td><td class="num">290 mp</td></tr>
+            <tr class="hl"><td>Határeset (<code>hatareset: true</code>)</td><td>legalább egy: témán kívüli kérdés, hibás adat vagy támadás</td><td class="num">a lépések között</td></tr>
+            <tr><td>Zárás (<code>zaras_mp</code>)</td><td>mit tanultatok, mi lenne a következő lépés</td><td class="num">40 mp</td></tr>
+            <tr><td>B-terv (<code>b_terv</code>)</td><td>mit csináltok, ha élőben valami nem működik</td><td class="num">–</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="code"><button class="copy" type="button">Másolás</button><pre>  - nev: Témán kívüli kérdés
+    ki: Bence
+    mondjuk: "Olyat kérdezünk, ami nincs a házirendben. Nem talál ki semmit."
+    mp: 55
+    hatareset: true
+    keres: POST /kerdesek
+    torzs: {szoveg: "Ki nyerte a tavalyi Forma–1-es világbajnokságot?"}
+    statusz: 201
+    tartalmaz: '"nem_tudom":true'</pre></div>
+    </section>
+
+    <section id="vedes" aria-labelledby="h-vedes">
+      <span class="eyebrow">docs/VEDES.md</span>
+      <h2 id="h-vedes">Felkészülés a védésre</h2>
+      <div class="grid2">
+        <div class="card"><h3>Kódbejárás</h3><p>Legalább 3 fájl, amit megnyittok, ha a bizottság a kódra kíváncsi: miért ezt, és ki mutatja. Gyakoroljátok: nyisd meg, és mondd el egy percben, mi történik benne.</p></div>
+        <div class="card"><h3>Várható kérdések</h3><p>Legalább 8 kérdés, mindegyik alatt <b>Válasz:</b> és <b>Ki válaszol:</b>. Témák: architektúra, tesztelés, biztonság, személyes adat, MI-használat, döntések. A párból mindketten válaszoltok.</p></div>
+      </div>
+      <div class="callout"><span class="eyebrow warn">Ha nem tudod a választ</span><p>Mondd ki, és mondd el, hol néznéd meg. Ez többet ér, mint a magabiztos találgatás – a bizottság azt pontozza, hogy ismered-e a saját kódodat.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · a blokk előtt</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál. A böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>A csomag bemásolása</h3></div>
+          <div class="stepbody">
+            <p>Töltsd le a <a href="https://github.com/Kizsi2025/bolyai-labs-30-demoday">csomagot</a>, és másold a repód gyökerébe. Olvasd el a <code>DEMODAY.md</code>-t.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>Expand-Archive ..\bolyai-labs-30-demoday.zip ..\csomag30
+Copy-Item ..\csomag30\bolyai-labs-30-demoday\* . -Recurse -Force
+python -m pytest -q</pre></div>
+            <p>Most 5 teszt piros.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>A forgatókönyv</h3></div>
+          <div class="stepbody">
+            <p>Írd át a <code>demo.yaml</code>-t a saját projektedre, töröld a <code>pelda: true</code> sort. Próbáld ki helyben, kulcs nélkül:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python foproba_futtat.py</pre></div>
+            <p>A Git-sorok itt még pirosak lehetnek – a forgatókönyv és az időterv legyen zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>Védési felkészülés</h3></div>
+          <div class="stepbody">
+            <p>Töltsd ki a <code>docs/VEDES.md</code>-t: egy mondatban, architektúra, kódbejárás, legalább 8 kérdés, amit az MI írt, B-terv. Minden PÉLDA és <code>___</code> tűnjön el.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Commit és címke</h3></div>
+          <div class="stepbody">
+            <p>A címke ugyanaz, mint az API verziója (pl. <code>0.8.1-beta</code>):</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git add .
+git commit -m "docs: Demo Day forgatókönyv és védési felkészülés"
+git tag v0.8.1-beta
+git push
+git push origin v0.8.1-beta</pre></div>
+            <p>A címke után a dokumentáció, a tesztek és a <code>demo.yaml</code> még változhat, a futó kód nem. Ha a kód változik: új verzió és új címke.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Főpróba élőben</h3></div>
+          <div class="stepbody">
+            <p>Azon a gépen, amelyről bemutatsz, a futó szerverrel. Egy ablakban a szerver, a másikban a főpróba:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m uvicorn app.api:app --app-dir src
+python foproba_futtat.py --url http://127.0.0.1:8000</pre></div>
+            <p>Ha minden zöld, commitold és pushold a <code>docs/FOPROBA.md</code>-t. Élő modellel a válasz más, mint a demómodellel: a <code>tartalmaz</code> legyen olyan, ami mindkettőnél igaz (pl. a forrás neve).</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>A bemutató után: napló</h3></div>
+          <div class="stepbody">
+            <p>Még aznap a <code>HALADAS.md</code> végére: „## 30. blokk – Demo Day I.”, benne <b>Bemutató:</b>, <b>Védés:</b> és <b>Visszajelzés:</b>.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest -q
+git add .
+git commit -m "docs: Demo Day – bemutató és védés (feladatkártya #30)"
+git push</pre></div>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">Forgatókönyv, főpróba, címke, védés</h2>
+      <video controls preload="metadata" src="media/demoday_utmutato_30.mp4" aria-label="Videó: a csomag bemásolása, a forgatókönyv, főpróba helyben, címke, főpróba élőben, védési felkészülés, a bemutató után"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">100 pont · a tantárgy 40%-a</span>
+      <h2 id="h-pontozas">Mit néz a bizottság?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Teljes pont, ha…</th></tr></thead>
+          <tbody>
+            <tr><td>Működő bemutató</td><td class="num">25</td><td>élőben végigfut, van határeset, belefér az időbe, a közönség érti, kinek mire jó</td></tr>
+            <tr><td>Műszaki megvalósítás</td><td class="num">25</td><td>zöld CI minden szerződéssel, tiszta rétegek, biztonság (kulcs, injekció, hibakezelés)</td></tr>
+            <tr class="hl"><td>Szóbeli kódvédés (egyéni)</td><td class="num">30</td><td>megtalálod és elmagyarázod a kódot, indoklod a döntéseidet, és kimondod, amit nem tudsz</td></tr>
+            <tr><td>Dokumentáció és megfelelőség</td><td class="num">10</td><td>README, ARCHITEKTURA, MEGFELELOSEG, FOPROBA – a saját projektedről</td></tr>
+            <tr><td>Folyamat</td><td class="num">10</td><td>haladási napló sprintenként, beszédes commitok, hibajegyek, MI-napló</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">100</td><td>a végleges pont a 31. blokkban derül ki</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Feladatkártya #30 (5 sprintpont, külön):</b> zöld build a Demo Day-szerződéssel és commitolt főpróba-jelentés (2), a bemutató az időkereten belül (1), mindketten válaszoltatok a védésen (1), kitöltött napló (1).</p>
+    </section>
+
+    <section id="nap" aria-labelledby="h-nap">
+      <span class="eyebrow warn">A bemutató napján</span>
+      <h2 id="h-nap">Ellenőrzőlista</h2>
+      <ul>
+        <li>Laptop feltöltve, töltő, HDMI- vagy USB-C-átalakító. Értesítések kikapcsolva (Teams, levelezés).</li>
+        <li>A szerver már fut, a böngésző nagyítása 150%, a terminál betűmérete nagy.</li>
+        <li><b>A <code>.env</code> soha nem kerül a kivetítőre</b>: ne nyisd meg, ne írasd ki. Ha mégis megtörténik, a bemutató után azonnal cseréld le a kulcsot.</li>
+        <li>A Gemini API 18 év felett használható: a projektet a saját kulcsotokkal, a saját gépetekről mutatjátok. Ha még nem vagy 18, helyi modellel vagy a demómodellel mutass – beszéld meg előre a tanárral.</li>
+        <li>A kérdésekben ne legyen valódi diák neve vagy adata.</li>
+        <li>Kéznél: a <code>demo.yaml</code> (súgónak), a <code>docs/VEDES.md</code> és a B-terv.</li>
+        <li>Közönségként: nem kérdezel közbe, nem próbálod ki a rendszert a saját gépeden, és kitöltöd a Formst (két csillag, egy kívánság).</li>
+      </ul>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>„a demo.yaml még a példa”</summary><div><p>Töröld a <code>pelda: true</code> sort, és a <code>b_terv</code>-ből a PÉLDA szót.</p></div></details>
+      <details><summary>„… nincs a szerepek között”</summary><div><p>A <code>ki:</code> pontosan úgy legyen írva, mint a <code>szerepek</code> listában (kis- és nagybetű is).</p></div></details>
+      <details><summary>„a tervezett idő több, mint az időkeret”</summary><div><p>Húzz ki egy lépést, vagy rövidítsd a nyitást. Egy lépés 60 másodperce gyorsan elfogy, ha közben magyarázol.</p></div></details>
+      <details><summary>„nincs címke” vagy „a … óta változott a futó rendszer”</summary><div><p>Címke: <code>git tag v&lt;verzió&gt;</code>, <code>git push origin v&lt;verzió&gt;</code>. Ha a címke után a kód is változott, az hibajavítás: új verzió (pl. <code>0.8.2-beta</code>), CHANGELOG, <code>python kiadas_futtat.py</code>, új címke.</p></div></details>
+      <details><summary>„A főpróba-jelentés elavult”</summary><div><p>A <code>demo.yaml</code> vagy a verzió változott. Futtasd újra: <code>python foproba_futtat.py</code>, és commitold a jelentést.</p></div></details>
+      <details><summary>„A szerver nem érhető el”</summary><div><p>Elindult az <code>uvicorn</code>? Ugyanazon a porton? Ha ez élőben történik: B-terv.</p></div></details>
+      <details><summary>Kódbejárás: „ezek a fájlok nincsenek a repóban”</summary><div><p>Az út a repó gyökeréhez képest kell, backtickek között: <code>`src/app/api.py`</code>.</p></div></details>
+    </section>
+
+    <section id="kovetkezo" aria-labelledby="h-kovetkezo">
+      <div class="card"><span class="eyebrow">Következő alkalom · 31. blokk</span><h3 id="h-kovetkezo" style="margin-top:8px">Demo Day II.</h3><p>A többi bemutató, összegző értékelés, minősítések – és a Tech Lead-avatás.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk30-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

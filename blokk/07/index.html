@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 7. blokk: Páros programozás géppel: refaktorálás Copilottal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../06/" style="color:#B8C4D6;text-decoration:none">← 6. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../08/" style="color:#B8C4D6;text-decoration:none">8. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 7. blokk</span>
+    <h1>Páros programozás géppel: refaktorálás Copilottal</h1>
+    <p>Mától VS Code-ban dolgozunk. Az 1. órán megérted, hogyan dolgozik egy IDE-asszisztens, és mi a refaktorálás. A 2. órán egy régi, működő, de olvashatatlan riportszkriptet teszel rendbe – úgy, hogy közben semmi ne romoljon el.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#7</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Eszköz: <b>VS Code + Copilot</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-07-refaktor">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/7B1R7BayFXKj2YHuXLxkWd">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/06/">A 6. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/08/">A 8. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">A gép mint párprogramozó</h2>
+      <div class="grid2">
+        <div class="card"><h3>A prompt itt a kódod</h3><p>Az IDE-asszisztens ugyanaz a nyelvi modell, mint a 6. blokkban. A promptja a nyitott fájlok, a kurzor körüli sorok, a nevek és a megjegyzések. Beszédes nevek és jó docstring mellett jobbak a javaslatai.</p></div>
+        <div class="card"><h3>A kódért te felelsz</h3><p>Az asszisztens magabiztosan javasol hibás vagy elavult kódot is. Titkos kulcs soha ne kerüljön a kódba vagy a chatbe. Amit nem értesz, azt ne fogadd el.</p></div>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Mód</th><th scope="col">Mit csinál?</th><th scope="col">Ma</th></tr></thead>
+          <tbody>
+            <tr><td>Kódkiegészítés</td><td>Szürke „szellemszöveg” gépelés közben; Tab: elfogad, Esc: elvet</td><td><code>segedek.py</code></td></tr>
+            <tr><td>Chat</td><td>Kérdés a kijelölt kódról: <code>/explain</code>, <code>/doc</code>, <code>/fix</code> vagy saját kérés</td><td><code>riport.py</code></td></tr>
+            <tr><td>Ágens mód</td><td>Több lépésben, több fájlt is módosít, parancsot is futtat</td><td>ma nem</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Kódszag</th><th scope="col">Példa a régi riport.py-ban</th><th scope="col">Javítás</th></tr></thead>
+          <tbody>
+            <tr><td>Globális állapot</td><td><code>global d, eredmeny</code></td><td>paraméter és visszatérési érték</td></tr>
+            <tr><td>Hosszú függvény</td><td>kb. 60 sor, mindent egyben csinál</td><td>kis függvények</td></tr>
+            <tr><td>Rossz nevek</td><td><code>d, m, l, s, t, x, k</code></td><td><code>hivasok, modell, tokenek</code></td></tr>
+            <tr><td>Varázsszámok</td><td><code>900, 0.8, 2.5, 0.4</code></td><td>nevesített konstansok</td></tr>
+            <tr><td>Ismétlés</td><td>öt külön ciklus ugyanazon a listán</td><td>egy függvény, összegző kifejezések</td></tr>
+            <tr><td>Indexek</td><td><code>x[3]</code>, <code>x[4]</code></td><td><code>csv.DictReader</code>, oszlopnevek</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card"><h3>Refaktorálás</h3><p>A szerkezet változik, a viselkedés nem. A <b>karakterizációs tesztek</b> rögzítik, mit csinál most a régi kód. Lépések: teszt zöld → kis változtatás → teszt zöld? → commit.</p></div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #7 · 2. óra · refaktorálási feladat</span>
+      <h2 id="h-kartya">A régi riport rendbetétele</h2>
+      <div class="card story">„Vezető fejlesztőként szeretném, ha a régi hívásriport-szkriptet valaki rendbe tenné: ugyanazt csinálja, de olvasható, dokumentált és karbantartható legyen. Az MI-asszisztenst nyugodtan használd – de te felelsz minden soráért.”</div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Rész</th><th scope="col">Feladat</th><th scope="col">Tesztek</th></tr></thead>
+          <tbody>
+            <tr><td>a) Kódkiegészítés</td><td><code>segedek.py</code>: percentilis, szazalek – a docstring alapján</td><td>test_segedek</td></tr>
+            <tr><td>b) Refaktorálás</td><td><code>riport.py</code>: nincs global, legfeljebb 20 soros függvények, beszédes nevek, konstansok</td><td>test_viselkedes (végig zöld!), test_minoseg</td></tr>
+            <tr><td>c) Dokumentáció</td><td>modul- és függvény-docstringek, típusjelölések, ruff</td><td>test_minoseg</td></tr>
+            <tr><td>d) AI-napló</td><td><code>AI_NAPLO.md</code>: mit fogadtál el, mit utasítottál el, és miért</td><td>test_ai_naplo</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><span class="eyebrow warn">Az aranyszabály</span><p><b>A <code>tests/test_viselkedes.py</code> végig zöld marad.</b> A teszteket és az <code>elvart_*</code> fájlokat ne módosítsd. Minden zöld lépés után commit.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hét lépés · VS Code-ban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/7</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és klónozás</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-07-refaktor">sablonrepón</a>: <b>Use this template</b>, név <code>refaktor-</code> + osztálykód + sorszám, <b>Public</b>. Aztán klónozd és nyisd meg VS Code-ban:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/refaktor-13b-07.git
+cd refaktor-13b-07
+code .</pre></div>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>Környezet és tesztek</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>Az eredmény: <b>9 piros, 10 zöld</b>. A zöldek a viselkedési tesztek – ezeknek végig zöldnek kell maradniuk. VS Code-ban válaszd ki a <code>.venv</code> értelmezőt (Ctrl+Shift+P → Python: Select Interpreter).</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>Copilot bekapcsolása</h3></div>
+          <div class="stepbody">
+            <p>Extensions (Ctrl+Shift+X) → <b>GitHub Copilot</b> és <b>GitHub Copilot Chat</b> (a repó ajánlja is őket) → bejelentkezés a saját GitHub-fiókoddal. A Copilot Free bármely fiókkal működik.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>a) Kódkiegészítés</h3></div>
+          <div class="stepbody">
+            <p>A <code>segedek.py</code>-ban töröld a <code>raise NotImplementedError</code> sorokat, és állj a docstring alá: a Copilot javasol (szürke szöveg). <b>Tab</b>: elfogad, <b>Esc</b>: elvet. Ellenőrizd:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest tests/test_segedek.py</pre></div>
+            <p>Zöld? Commit: <code>git commit -am "feat: segédfüggvények"</code></p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>b) Refaktorálás kis lépésekben</h3></div>
+          <div class="stepbody">
+            <p>Jelöld ki a kódrészt a <code>riport.py</code>-ban, és kérj a Copilot Chattől <b>egyszerre egy</b> dolgot. Javasolt sorrend: <code>global</code> ki → konstansok a varázsszámok helyett → beolvasás <code>csv.DictReader</code>-rel → felbontás kis függvényekre → beszédes nevek. Minden lépés után:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest</pre></div>
+            <p>Ha a <code>test_viselkedes</code> piros lett: <code>git restore riport.py</code>, és kisebb lépésben újra. Ha zöld: commit.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>c) Dokumentáció és ruff</h3></div>
+          <div class="stepbody">
+            <p>Modul- és függvény-docstringek (Copilot Chat: <code>/doc</code> – de olvasd el, igaz-e!), típusjelölések minden paraméteren és visszatérési értéken. Ellenőrzés:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>ruff check .
+python -m pytest</pre></div>
+            <p>Cél: <b>19 passed</b>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s7" aria-label="7. lépés kész">
+          <div class="stephead"><span class="stepnum">7</span><h3>d) AI-napló, push, beadás</h3></div>
+          <div class="stepbody">
+            <p>Töltsd ki az <code>AI_NAPLO.md</code>-t (minden TODO helyére 2–3 mondat). Utána:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git add .
+git commit -m "refactor: hívásriport rendbetétele (feladatkártya #7)"
+git push</pre></div>
+            <p>Az Actions fülön a <b>Feladatkártya 7</b> futás legyen zöld, aztán a repó linkje a Teams-feladatba.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc 6 mp · felirattal</span>
+      <h2 id="h-video">A teljes folyamat VS Code-ban</h2>
+      <video controls preload="metadata" src="media/refaktor_utmutato_7.mp4" aria-label="Videó: refaktorálás VS Code-ban Copilottal, tesztek, push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 7” futás mind a 19 tesztje sikeres.</td></tr>
+            <tr><td>Határidő</td><td class="num">1</td><td>A 2. óra végéig.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td>Több kis commit; az utolsó: <code>refactor: hívásriport rendbetétele (feladatkártya #7)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> írj egy új tesztet egy harmadik modellre (pl. „profi”, saját árral), és alakítsd úgy a kódot, hogy az árak egy helyen legyenek.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>A test_riport_adatai piros lett egy lépés után</summary><div><p>A lépés megváltoztatta a viselkedést. Nézd meg: <code>git diff</code>, majd <code>git restore riport.py</code>, és kisebb lépésben újra.</p></div></details>
+      <details><summary>Más lett a p90</summary><div><p>A percentilis interpolál (<code>statistics.quantiles</code>, numpy). A docstring szerinti definíció kell: <code>sorted(ertekek)[int(p / 100 * (n - 1))]</code>.</p></div></details>
+      <details><summary>A teljes költség 0,01-gyel eltér</summary><div><p>A régi kód a modellenként kerekített költségeket adja össze. A kerekítés sorrendje számít.</p></div></details>
+      <details><summary>C901 … is too complex</summary><div><p>A függvényben túl sok az elágazás vagy a ciklus: bontsd tovább.</p></div></details>
+      <details><summary>PLR2004 Magic value used in comparison</summary><div><p>A szám helyett nevezett konstans kell, például <code>LASSU_HATAR_MS = 900</code>.</p></div></details>
+      <details><summary>A Copilot nem javasol semmit</summary><div><p>Jelentkezz be a GitHub-fiókoddal (VS Code bal alsó sarka, fiók ikon), és nézd meg, nem fogyott-e el a havi keret. A feladat asszisztens nélkül is megoldható – ezt írd az AI-naplóba.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Mi a különbség a kódkiegészítés és az ágens mód között?</li>
+        <li>Mondj három kódszagot a riport.py-ból, és mindegyikhez egy javítást!</li>
+        <li>Honnan tudod, hogy a refaktorálás után is ugyanazt csinálja a kód?</li>
+        <li>Miért te felelsz azokért a sorokért is, amelyeket a Copilot írt?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 8. blokk</span><h3 style="margin-top:8px">Teszt előbb – Tesztgenerálás MI-vel</h3><p>Ma a tesztek készen voltak, és ők védték meg a kódot az asszisztens hibáitól. Jövő héten mi írjuk meg őket – a kód előtt.</p></div>
+    </section>
+  </main>
+</div>
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk7-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

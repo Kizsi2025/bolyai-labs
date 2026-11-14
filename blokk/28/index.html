@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 28. blokk: Projektfejlesztés VIII.: audit, tesztfuttatás, béta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../27/" style="color:#B8C4D6;text-decoration:none">← 27. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../29/" style="color:#B8C4D6;text-decoration:none">29. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 28. blokk</span>
+    <h1>Projektfejlesztés VIII.: audit, tesztfuttatás, béta</h1>
+    <p>Ez a 3. modul utolsó sprintje: a projekted kiadható állapotba kerül, és ezt rögzítjük. Forráskód-auditot futtatsz, egyszerre lefuttatod az összes eddigi ellenőrzést, elkészíted a kiadási jelentést, és címkét teszel a bétára. Utána jön a kódfagyasztás: a Demo Dayig már csak hibajavítás kerülhet be.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#28</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Kulcs: <b>nem kell</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-28-beta">A béta-csomag</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/WxQ2cnQyD9rfY8HNhkHWKS">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/27/">A 27. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/29/">A 29. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#audit">Az audit</a>
+    <a href="#kulcs">Ha kulcs került a gitbe</a>
+    <a href="#beta">A béta</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="audit" aria-labelledby="h-audit">
+      <span class="eyebrow">Sprintcél: kiadható, és ezt rögzítjük</span>
+      <h2 id="h-audit">Forráskód-audit: hét ellenőrzés kiadás előtt</h2>
+      <div class="code"><button class="copy" type="button">Másolás</button><pre>python kiadas_futtat.py audit</pre></div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Ellenőrzés</th><th scope="col">Mit néz?</th></tr></thead>
+          <tbody>
+            <tr><td>gitignore</td><td>ki van-e zárva a <code>.env</code>, a <code>.venv</code>, a <code>__pycache__</code> és az <code>adat/</code> (vagy <code>*.db</code>)</td></tr>
+            <tr class="hl"><td>követett fájlok</td><td>felkerült-e a gitbe <code>.env</code>, adatbázis, <code>.venv</code> vagy <code>__pycache__</code></td></tr>
+            <tr class="hl"><td>titkok</td><td>van-e kulcsnak látszó szöveg bármelyik fájlban, vagy kitöltött kulcs a <code>.env.pelda</code>-ban</td></tr>
+            <tr><td>függőségek</td><td>a <code>requirements.txt</code> minden sora <code>csomag==verzió</code> alakú-e</td></tr>
+            <tr><td>biztonsági lint</td><td>a ruff biztonsági szabályai (<code>S</code>): SQL-szöveg összefűzése, <code>eval</code>, <code>shell=True</code> …</td></tr>
+            <tr><td>hibakereső maradék</td><td>maradt-e <code>print()</code>, <code>breakpoint()</code>, pdb, TODO vagy FIXME a saját moduljaidban</td></tr>
+            <tr><td>verzió</td><td>az API verziója <code>x.y.z-beta</code>-e, és megegyezik-e a CHANGELOG legfelső bejegyzésével</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="kulcs" aria-labelledby="h-kulcs">
+      <span class="eyebrow warn">A legfontosabb</span>
+      <h2 id="h-kulcs">Ami egyszer felkerült, az kiszivárgott</h2>
+      <p>Ha egy kulcs a GitHubra került, nem elég törölni: a git-előzményben ott marad, a nyilvános repókat pedig robotok pásztázzák. A sorrend:</p>
+      <ol>
+        <li><b>Kulcscsere:</b> az AI Studióban töröld a régi kulcsot, és az újat írd a <code>.env</code>-be. Ez az első lépés, mert a visszaélés percek alatt megtörténhet.</li>
+        <li><code>git rm --cached .env</code>, commit, push.</li>
+        <li>Szólj a tanárnak: ha kell, közösen kitakarítjátok a git-előzményt.</li>
+      </ol>
+    </section>
+
+    <section id="beta" aria-labelledby="h-beta">
+      <span class="eyebrow">2. óra</span>
+      <h2 id="h-beta">A béta: funkciókész, de még tesztelőkre vár</h2>
+      <div class="grid2">
+        <div class="card"><h3>Egy verzió, mindenhol</h3><p>A verziószám <code>0.8.0-beta</code>, és négy helyen ugyanaz kell legyen: az <code>api.py</code>-ban (<code>FastAPI(version=…)</code>), a CHANGELOG-ban, a BETA.md-ben és a git-címkén. Utána generáld újra az API-referenciát.</p></div>
+        <div class="card"><h3>Kiadási jelentés</h3><p>A <code>python kiadas_futtat.py</code> az összes eddigi ellenőrzést lefuttatja, és elkészíti a BETA.md-t. Az alját te írod: <b>ismert hibák és korlátok</b>, meg hogy <b>mit kérsz a béta-tesztelőktől</b>.</p></div>
+      </div>
+      <div class="callout"><span class="eyebrow">Kódfagyasztás</span><p>A címke után a Demo Dayig csak hibajavítás kerülhet be: hibajegy, regressziós teszt, <code>fix: … (#n)</code>. Javítás után új verzió jön (<code>0.8.1-beta</code>), a kiadott címkét nem mozgatjuk. Ha új ötleted van, írd fel hibajegyként, „később” címkével.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · egy sprint</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál. A böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>A csomag bemásolása és az audit</h3></div>
+          <div class="stepbody">
+            <p>Töltsd le a <a href="https://github.com/Kizsi2025/bolyai-labs-28-beta">csomagot</a>, és másold a repód gyökerébe.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>Expand-Archive ..\bolyai-labs-28-beta.zip ..\csomag28
+Copy-Item ..\csomag28\bolyai-labs-28-beta\* . -Recurse -Force
+python -m pytest -q
+python kiadas_futtat.py audit</pre></div>
+            <p>Most 5 teszt piros.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>Az audit találatainak javítása</h3></div>
+          <div class="stepbody">
+            <p>Javítsd ki, amit az audit talált: <code>.gitignore</code>, követett fájlok, titkok, biztonsági találatok, <code>print()</code> és TODO. A biztonsági találatot a kódban javítsd, ne a szabályt kapcsold ki. Ha kulcs került a gitbe, előbb cseréld le (lásd fent).</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>Függőségek és verzió</h3></div>
+          <div class="stepbody">
+            <p>A <code>requirements.txt</code> minden sorába írd be a pontos verziót, amit a <code>pip freeze</code> mutat. Utána próbáld ki egy tiszta venv-ben is.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pip freeze
+python doksi_futtat.py api</pre></div>
+            <p>Állítsd be a verziót az <code>api.py</code>-ban: <code>version="0.8.0-beta"</code>, és a CHANGELOG tetejére írd be: <code>## [0.8.0-beta] – 28. blokk</code>. A CI-be, a ruff után kerüljön ez a sor: <code>- run: python kiadas_futtat.py audit</code>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Minden ellenőrzés: a BETA.md</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python kiadas_futtat.py</pre></div>
+            <p>Ha egy sor piros, futtasd külön az adott ellenőrzést, javítsd, és futtasd újra. A BETA.md alján töltsd ki a kézi részt: ismert hibák és korlátok, és hogy mit kérsz a béta-tesztelőktől.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Címke és GitHub Release</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git add .
+git status
+git commit -m "release: béta 0.8.0-beta (feladatkártya #28)"
+git push
+git tag v0.8.0-beta
+git push origin v0.8.0-beta</pre></div>
+            <p>A GitHubon: <b>Releases → Draft a new release</b>. A címke <code>v0.8.0-beta</code>, a leírásba másold a BETA.md-t, és pipáld be: <b>Set as a pre-release</b>. A linket tedd be a Teams-feladatba.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Napló</h3></div>
+          <div class="stepbody">
+            <p>A <code>HALADAS.md</code> végére írd be a „## 28. blokk – Béta” részt. Kerüljön bele a <b>Béta:</b> sor a címkével és a Release linkjével, valamint a <b>Kódfagyasztás:</b> sor: mi változhat még a Demo Dayig. Commitold és pushold.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">Audit, függőségek, BETA.md, címke</h2>
+      <video controls preload="metadata" src="media/beta_utmutato_28.mp4" aria-label="Videó: a csomag bemásolása, az audit, ha kulcs került a gitbe, függőségek és verzió, minden ellenőrzés, ismert hibák, címke és Release"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Záró projekt” futás minden tesztje zöld, köztük a béta-szerződés, és az audit a CI-ben is lefut. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Béta-kiadás</td><td class="num">1</td><td>Van <code>v0.8.0-beta</code> címke és GitHub Release (pre-release) a BETA.md-vel, és az ismert hibák őszintén le vannak írva.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>release: béta 0.8.0-beta (feladatkártya #28)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>A 2. óra végén érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>„a gitben van, pedig nem lehetne: .env”</summary><div><p>Először cseréld le a kulcsot az AI Studióban, aztán futtasd: <code>git rm --cached .env</code>, majd commit és push. Szólj a tanárnak is.</p></div></details>
+      <details><summary>„nincs rögzítve”</summary><div><p>Minden sor <code>csomag==verzió</code> alakú legyen. A pontos verziót a <code>python -m pip freeze</code> mutatja.</p></div></details>
+      <details><summary>A CI-ben nem települ egy rögzített verzió</summary><div><p>Az a verzió nem fut Python 3.12-n. Nézd meg a hibaüzenetet, és válassz olyan verziót, amelyik települ.</p></div></details>
+      <details><summary>S608 (SQL-összefűzés)</summary><div><p>A SQL-be ne f-stringgel tedd az értéket, hanem <code>?</code> paraméterrel: <code>execute("… WHERE id = ?", (azon,))</code>.</p></div></details>
+      <details><summary>A BETA.md-ben piros sor van</summary><div><p>A sor megmondja, melyik ellenőrzés bukott el. Futtasd azt külön (pl. <code>python doksi_futtat.py</code>), javítsd, és utána a <code>python kiadas_futtat.py</code>-t újra.</p></div></details>
+      <details><summary>„a címke már létezik”</summary><div><p>A kiadott címkét nem mozgatjuk. Javítsd a hibát, és adj ki új verziót: <code>0.8.1-beta</code>.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">A 2. óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miért nem elég törölni a GitHubra felkerült kulcsot?</li>
+        <li>Mi került a BETA.md ismert hibái közé, és miért fontos ezt leírni?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 29. blokk · 4. modul</span><h3 style="margin-top:8px">Etikai és jogi audit</h3><p>MI-etikai irányelvek, licencek, szellemi tulajdon és GDPR, a saját projekteden.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk28-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

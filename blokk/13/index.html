@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 13. blokk: Szerszámot a kézbe: eszközhasználó ágens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../12/" style="color:#B8C4D6;text-decoration:none">← 12. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../14/" style="color:#B8C4D6;text-decoration:none">14. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 13. blokk</span>
+    <h1>Szerszámot a kézbe: eszközhasználó ágens</h1>
+    <p>A 12. blokkban az ágens kész eszközöket kapott. Ma ti írtok neki eszközöket: saját Python-függvényeket, egy fájlkezelőt és külső API-kat. És korlátozzátok, mit tehet velük – mert a leírás a modellnek szól, de a biztonság a kódban van.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#13</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Eszközök: <b>7 + a tiéd</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-13-eszkozok">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/UFnjBrjwbaLnKudcSwhGyh">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/12/">A 12. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/14/">A 14. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">Jó szerszám, biztonságos szerszám</h2>
+      <div class="grid2">
+        <div class="card"><h3>Függvényből eszköz</h3><p>A modell csak a nevet, a leírást és a paramétereket látja. A JSON-sémát nem kézzel írjuk: a <code>@eszkoz</code> dekorátor a típusjelölésekből (str → string, int → integer, float → number, bool → boolean) és a docstringből készíti. Ami nem kap alapértéket, az kötelező.</p></div>
+        <div class="card"><h3>A leírás a használati utasítás</h3><p>„Keresés.” – rossz. „Keresés a magyar Wikipédiában. Általános tudáshoz – a cégről NEM ezt használd.” – jó. Mire való, mikor használd, mikor ne, és a paraméterek formátuma példával.</p></div>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szabály</th><th scope="col">Mit jelent a kódban?</th></tr></thead>
+          <tbody>
+            <tr><td>Külső API</td><td>időkorlát, User-Agent, a bemenet ellenőrzése kiküldés előtt, hibánál <code>ValueError</code>, tömör eredmény forrással</td></tr>
+            <tr><td>Legkisebb jogosultság</td><td>csak a <code>munkaterulet/</code> mappa, csak <code>.md</code>, <code>.txt</code>, <code>.csv</code>; az útvonal ellenőrzése a <code>resolve()</code> után</td></tr>
+            <tr><td>Olvas vagy módosít?</td><td>az olvasó eszközök szabadon futnak; a módosító (<code>jegyzet_ir</code>) csak jóváhagyással, és semmit nem ír felül</td></tr>
+            <tr class="hl"><td>Prompt injection</td><td>az eszköz eredménye <b>adat, nem utasítás</b> – de a valódi védelem a homokozó és a jóváhagyás, nem a prompt</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #13 · 2. óra · Eszközhasználó ágens labor</span>
+      <h2 id="h-kartya">Fájlok és szolgáltatások – engedéllyel</h2>
+      <div class="card story">„Belső asszisztensként szeretném, ha az ágens a cég fájljaival és külső szolgáltatásokkal is dolgozni tudna – de csak a kijelölt mappában, és semmit ne írhasson felül vagy menthessen el az engedélyem nélkül.”</div>
+      <div class="callout"><span class="eyebrow">Hogyan tesztel a CI internet nélkül?</span><p>Egyetlen <b>ál-szerver</b> három szolgáltatást utánoz: a nyelvi modellt (eszközhívásokkal), a Frankfurter árfolyam-API-t (rögzített árfolyammal) és a Wikipédia keresőjét. A fájltesztek ideiglenes munkaterületen futnak – mellette egy „titok.txt” csali, amit a homokozónak meg kell védenie.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · VS Code-ban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és környezet</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-13-eszkozok">sablonrepón</a>: <b>Use this template</b>, név <code>eszkoz-</code> + osztálykód + sorszám, <b>Public</b>. Aztán:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/eszkoz-13b-07.git
+cd eszkoz-13b-07
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>26 piros, 4 zöld. Az <code>agens.py</code> kész (a 12. blokk ciklusa, jóváhagyással) – ma az eszközeit írod meg. A 10–12. blokk <code>.env</code> fájlját átmásolhatod.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>Az @eszkoz dekorátor</h3></div>
+          <div class="stepbody">
+            <p>Az <code>eszkoztar.py</code>-ban: a docstring első bekezdése a leírás, a <code>nev: leírás</code> sorok a paraméterleírások; az <code>inspect.signature</code> paramétereiből a típus (<code>TIPUSOK</code>) és a kötelező lista. Docstring nélkül <code>ValueError</code>, nem támogatott típusra <code>TypeError</code>. Utána nézd meg, mit lát a modell:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python agens.py --eszkozok</pre></div>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>Homokozó: biztonsagos_utvonal, fajl_olvas, jegyzet_ir</h3></div>
+          <div class="stepbody">
+            <p>Az útvonalat a <code>resolve()</code> <b>után</b> ellenőrizd (<code>is_relative_to</code>): így a <code>jegyek/../../</code> trükk sem csúszik át. Csak <code>.md</code>, <code>.txt</code>, <code>.csv</code>. A <code>fajl_olvas</code> 4000 karakternél levág, a <code>jegyzet_ir</code> csak a <code>jegyzetek/</code> mappába ír, meglévőt nem ír felül, és 2000 karakternél hosszabbat nem fogad el. <code>tests/test_fajlok.py</code>: 13 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Külső API: arfolyam</h3></div>
+          <div class="stepbody">
+            <p>A kész <code>wiki_kereses</code> mintájára hívd a <a href="https://frankfurter.dev">Frankfurter API</a>-t (EKB napi árfolyamok, kulcs nem kell): <code>GET …/v1/latest?base=USD&amp;symbols=HUF</code>. Ellenőrizd a devizakódot kiküldés előtt, adj meg <code>timeout</code>-ot és <code>headers=FEJLEC</code>-et, hibánál <code>ValueError</code>. Az eredmény egy tömör mondat, árfolyammal, dátummal, forrással. <code>tests/test_kulso_api.py</code>: zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Saját eszköz</h3></div>
+          <div class="stepbody">
+            <p>Az <code>eszkozok.py</code> végére írj legalább egy saját <code>@eszkoz()</code> függvényt: rendes leírással (mire való, mikor használd) és minden paraméter leírásával. Ötletek: <code>jegy_statisztika(honap)</code> a <code>munkaterulet/jegyek</code> CSV-jéből, <code>datum_ma()</code>, <code>hatarido(datum, napok)</code>. Mind a 30 teszt zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Élő próba, LABOR.md, push</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python agens.py "Hány forint 25 000 token a nagyobb modellen diákként?"
+python agens.py "&lt;kérdés a saját eszközödhöz&gt;"
+python agens.py "Foglald össze a beszállítói levelet!"
+git status
+git add eszkoztar.py eszkozok.py LABOR.md
+git commit -m "feat: eszközhasználó ágens saját eszközzel (feladatkártya #13)"
+git push</pre></div>
+            <p>Ha az ágens jóváhagyást kér, a terminálban <code>i</code>-vel vagy <code>n</code>-nel válaszolj. A <code>LABOR.md</code>-be írd: melyik eszközöket hívta a forint-kérdésnél; használta-e magától a saját eszközödet; és mit kezdett a beszállítói levélben elrejtett „utasítással” – mi védett meg?</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">A teljes folyamat VS Code-ban</h2>
+      <video controls preload="metadata" src="media/eszkoz_utmutato_13.mp4" aria-label="Videó: eszköz dekorátor, homokozó, árfolyam-API, tesztek, prompt injection-próba és push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 13” futás mind a 30 tesztje sikeres (benne a saját eszközöd és a leírások ellenőrzése). Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Labor</td><td class="num">1</td><td>A <code>LABOR.md</code> három kérdésére érdemi válasz.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: eszközhasználó ágens saját eszközzel (feladatkártya #13)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz, a 2. óra végéig.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> egy második saját eszköz, amely külső API-t hív (például a Frankfurter történeti árfolyama egy adott napra), tesztekkel az ál-szerverre.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>Az import elszáll (AttributeError, NoneType)</summary><div><p>A dekorátor nem adja vissza a függvényt (<code>return fv</code>), vagy a <code>sema</code> még <code>...</code>.</p></div></details>
+      <details><summary>test_tiltott_utvonal: a jegyek/../../titok.txt átmegy</summary><div><p>Szövegként ellenőrzöl (<code>".." in nev</code>). A <code>resolve()</code> utáni útvonalat vizsgáld <code>is_relative_to</code>-val.</p></div></details>
+      <details><summary>A paraméterleírások üresek</summary><div><p>A docstringben a sor pontosan <code>nev: leírás</code> alakú legyen. Az <code>inspect.getdoc</code> a behúzást levágja.</p></div></details>
+      <details><summary>Az arfolyam élőben HIBA-t ad</summary><div><p>Nincs internet, vagy tűzfal blokkolja: nyisd meg böngészőben az <code>api.frankfurter.dev</code> címet. Ismeretlen devizakódra is 404 jön.</p></div></details>
+      <details><summary>A Wikipédia 403-at ad</summary><div><p>Hiányzik a User-Agent fejléc (<code>headers=FEJLEC</code>).</p></div></details>
+      <details><summary>A modell nem használja a saját eszközömet</summary><div><p>A leírásban legyen benne, mikor kell használni („Hibajegy-statisztikához mindig ezt…”), és mikor nem.</p></div></details>
+      <details><summary>A program vár, nem megy tovább</summary><div><p>Jóváhagyást kér: a terminálban <code>i</code>-vel vagy <code>n</code>-nel válaszolj.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miből tudja a modell, hogy mikor és hogyan használjon egy eszközt?</li>
+        <li>Miért nem elég a promptban megírni, hogy „ne olvasd be a .env fájlt”?</li>
+        <li>Miért kell az útvonalat a resolve() után ellenőrizni?</li>
+        <li>Melyik eszköz kér jóváhagyást, és miért csak az?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 14. blokk</span><h3 style="margin-top:8px">Csapatépítés gépeknek – Többágenses szerepek</h3><p>Egy ágensnek egyre több eszköze van. Jövő héten szétosztjuk a munkát: Kutató, Tervező, Programozó és Tesztelő ágens – mindegyik csak a szerepéhez kellő eszközökkel.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk13-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

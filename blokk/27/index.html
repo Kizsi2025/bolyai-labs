@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 27. blokk: Projektfejlesztés VII.: dokumentáció MI-támogatással</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../26/" style="color:#B8C4D6;text-decoration:none">← 26. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../28/" style="color:#B8C4D6;text-decoration:none">28. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 27. blokk</span>
+    <h1>Projektfejlesztés VII.: dokumentáció MI-támogatással</h1>
+    <p>A rendszered kész, tesztelt és mért. Most úgy kell leírnod, hogy más is telepíteni, használni és továbbfejleszteni tudja. A vázlatban az MI sokat segít, de magabiztosan téved: kitalál parancsot, fájlt, viselkedést. Ezért minden MI-vel írt részt ember ellenőriz, és amit a gép meg tud nézni, azt a gép is megnézi.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#27</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Kulcs: <b>nem kell</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-27-dokumentacio">A dokumentáció-csomag</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/HJYsaWRL8dryxbz99BkhMJ">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/26/">A 26. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/28/">A 28. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#dokumentumok">Hat dokumentum</a>
+    <a href="#mi">MI-vel, okosan</a>
+    <a href="#ellenor">A gép is ellenőriz</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="dokumentumok" aria-labelledby="h-dokumentumok">
+      <span class="eyebrow">Sprintcél: más is el tudja indítani, és igaz, amit olvas</span>
+      <h2 id="h-dokumentumok">Hat dokumentum, három olvasó</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Dokumentum</th><th scope="col">Kinek?</th><th scope="col">Ki írja?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td><code>README.md</code></td><td>annak, aki most látja először: mi ez, hogyan telepítem, futtatom, használom</td><td>te, MI-vázlatból</td></tr>
+            <tr class="hl"><td><code>docs/ARCHITEKTURA.md</code></td><td>annak, aki fejleszteni fogja: rétegek, egy kérés útja, döntések</td><td>te, MI-vázlatból</td></tr>
+            <tr><td><code>docs/API_REFERENCIA.md</code></td><td>annak, aki programból hívja</td><td><b>a gép, a kódból</b>: kézzel nem szerkesztjük</td></tr>
+            <tr class="hl"><td>docstringek</td><td>annak, aki a kódot olvassa</td><td>te, MI-javaslatból</td></tr>
+            <tr class="hl"><td><code>CHANGELOG.md</code></td><td>annak, aki tudni akarja, mi változott</td><td>te, a git logból</td></tr>
+            <tr class="hl"><td><code>docs/MI_NAPLO.md</code></td><td>a tanárnak és a csapatnak: mit írt az MI, ki ellenőrizte, mit javított</td><td>te</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A csomag nem írja felül a README-det. A mostani még a 20. blokk sablonja (feladatkártya, checklista), az újnak a <b>termékről</b> kell szólnia.</p>
+    </section>
+
+    <section id="mi" aria-labelledby="h-mi">
+      <span class="eyebrow">1. óra</span>
+      <h2 id="h-mi">Forrásanyagot adsz, a kitalálást kizárod</h2>
+      <div class="code"><button class="copy" type="button">Másolás</button><pre>Írj termék-README-t ezekkel a fejezetekkel:
+Mi ez? · Telepítés · Futtatás · Használat · Tesztek · Csapat
+Anyag: a régi README, requirements.txt, .env.pelda, projekt.yaml, HALADAS.md (bemásolva).
+Csak olyan parancsot és fájlt írj, ami a megadott anyagban szerepel.
+Ha valamit nem tudsz, írj [KÉRDÉS] jelölést – ne találd ki.
+Windows, PowerShell. Magyarul, diákoknak és fejlesztőknek.</pre></div>
+      <div class="callout"><span class="eyebrow">Aztán soronként ellenőrzöl</span><p>Minden parancsot lefuttatsz, minden fájlnevet megnézel. A leggyakoribb MI-hibák: <code>source .venv/bin/activate</code> (ez Linuxra való, nem Windowsra), egy kitalált <code>python main.py</code>, egy kimaradt <code>.env</code>-beállítás. Amit javítottál, beírod a <code>docs/MI_NAPLO.md</code>-be.</p></div>
+    </section>
+
+    <section id="ellenor" aria-labelledby="h-ellenor">
+      <span class="eyebrow">Docs as code</span>
+      <h2 id="h-ellenor">Amit a gép meg tud nézni, azt nézze meg</h2>
+      <div class="code"><button class="copy" type="button">Másolás</button><pre>python doksi_futtat.py ellenoriz   # hivatkozások, parancsok, .env-beállítások, kitöltetlen részek, kulcsok
+python doksi_futtat.py api         # a docs/API_REFERENCIA.md újragenerálása a kódból</pre></div>
+      <div class="grid2">
+        <div class="card"><h3>Mit lát az ellenőrző?</h3><p>Hogy élnek-e a relatív linkek és képek, léteznek-e a parancsokban szereplő fájlok, leírja-e a README a <code>.env.pelda</code> minden sorát, és maradt-e benne TODO, PÉLDA, ___ vagy kulcs.</p></div>
+        <div class="card"><h3>Mit nem lát?</h3><p>Hogy igaz-e, amit a rendszer viselkedéséről írtál. Azt neked kell a kóddal összevetned, és ezért kell a doksiteszt.</p></div>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · egy sprint</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál. A böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>A csomag bemásolása</h3></div>
+          <div class="stepbody">
+            <p>Töltsd le a <a href="https://github.com/Kizsi2025/bolyai-labs-27-dokumentacio">csomagot</a>, és másold a repód gyökerébe. Új függőség nem kell hozzá.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>Expand-Archive ..\bolyai-labs-27-dokumentacio.zip ..\csomag27
+Copy-Item ..\csomag27\bolyai-labs-27-dokumentacio\* . -Recurse -Force
+python -m pytest -q
+python doksi_futtat.py</pre></div>
+            <p>Most 8 teszt piros.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>README</h3></div>
+          <div class="stepbody">
+            <p>Ezek a fejezetek kellenek (<code>## </code> címmel): <b>Mi ez?</b>, <b>Telepítés</b>, <b>Futtatás</b>, <b>Használat</b>, <b>Tesztek</b>, <b>Csapat</b>. A README hivatkozzon a <code>docs/ARCHITEKTURA.md</code>, a <code>docs/API_REFERENCIA.md</code> és a <code>CHANGELOG.md</code> fájlra. A <code>.env.pelda</code> minden beállítását írd le egy-egy mondatban. Kezdd MI-vázlattal, aztán ellenőrizd soronként.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>Architektúra</h3></div>
+          <div class="stepbody">
+            <p>A <code>docs/ARCHITEKTURA.md</code>-ben legyen legalább 3 fejezet, egy mermaid-ábra a rétegekről, legalább 4 valódi modul a <code>src/app</code>-ból, és hivatkozás legalább egy ADR-re (<code>[0001](adr/0001-….md)</code>). Az ábrát modulonként vesd össze a kóddal.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Docstringek, API-referencia, változásnapló</h3></div>
+          <div class="stepbody">
+            <p>Minden nyilvános függvénynek és osztálynak legyen docstringje a saját moduljaidban. Egy mondat elég: mit csinál, mit ad vissza, mikor dob kivételt. Utána generáld újra az API-referenciát. A <code>CHANGELOG.md</code>-be sprintenként kerüljön egy bejegyzés (legalább 3), a git logból.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python doksi_futtat.py api
+git log --oneline</pre></div>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>MI-napló és doksiteszt</h3></div>
+          <div class="stepbody">
+            <p>A <code>docs/MI_NAPLO.md</code>-be legalább 3 bejegyzés kell, mindegyikben <b>Eszköz:</b>, <b>Ellenőrizte:</b> és <b>Javítás:</b>. <b>Doksiteszt:</b> a másik pár egyik tagja egy tiszta mappába klónozza a repódat, és csak a README alapján telepíti és indítja el. Te nem segítesz neki, csak jegyzetelsz. Ahol elakadt, ott javítsd a README-t.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Napló és push</h3></div>
+          <div class="stepbody">
+            <p>A <code>HALADAS.md</code> végére írd be a „## 27. blokk – Dokumentáció” részt, benne a <b>Doksiteszt:</b> sorral: ki telepítette, mennyi idő alatt, hol akadt el, mit javítottál.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python doksi_futtat.py
+python -m pytest -q --cov=src/app
+git add .
+git status
+git commit -m "docs: README, architektúra, API-referencia, MI-napló (feladatkártya #27)"
+git push</pre></div>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">README, ellenőrző, architektúra, referencia</h2>
+      <video controls preload="metadata" src="media/dokumentacio_utmutato_27.mp4" aria-label="Videó: a csomag bemásolása, README MI-vázlatból, az ellenőrző hibát talál, architektúra, generált API-referencia, push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Záró projekt” futás minden tesztje zöld, köztük a dokumentációs szerződés. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Doksiteszt</td><td class="num">1</td><td>A másik pár a README alapján elindította a rendszert, és a tapasztalatok alapján javítottál.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>docs: README, architektúra, API-referencia, MI-napló (feladatkártya #27)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>A 2. óra végén érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>„nem létező hivatkozás”</summary><div><p>A link a fájlhoz képest relatív: a <code>docs/ARCHITEKTURA.md</code>-ből <code>adr/0001-….md</code>, a README-ből <code>docs/adr/0001-….md</code>. A kis- és nagybetű is számít.</p></div></details>
+      <details><summary>„a parancsban szereplő fájl nem létezik”</summary><div><p>Az MI kitalált egy fájlt (gyakran <code>main.py</code> vagy <code>app.py</code>). Javítsd a valódira, és írd be az MI-naplóba.</p></div></details>
+      <details><summary>„a README nem írja le a .env-mintafájl beállítását”</summary><div><p>A <code>.env.pelda</code> minden <code>KULCS=</code> sorát meg kell nevezni a README-ben, mindegyiket egy mondattal.</p></div></details>
+      <details><summary>„kitöltetlen rész”</summary><div><p>TODO, PÉLDA vagy ___ maradt a szövegben. Kódblokkban és <code>`…`</code> között nem számít hibának.</p></div></details>
+      <details><summary>Az API-referencia „nem egyezik a kóddal”</summary><div><p>Futtasd: <code>python doksi_futtat.py api</code>, és a fájlt is commitold. Ha rossz benne valami, a kódban javítsd, ne a fájlban.</p></div></details>
+      <details><summary>A mermaid-ábra nem jelenik meg a GitHubon</summary><div><p>Az első sor legyen <code>flowchart LR</code> (vagy <code>TB</code>, <code>sequenceDiagram</code>, <code>erDiagram</code>), és a blokk <code>```mermaid</code> sorral kezdődjön.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">A 2. óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Mit írt rosszul az MI a dokumentációdban, és miből vetted észre?</li>
+        <li>Miért generáljuk az API-referenciát a kódból, ahelyett hogy kézzel írnánk?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 28. blokk</span><h3 style="margin-top:8px">Projektfejlesztés VIII.: béta</h3><p>A projekt véglegesítése, forráskód-audit és tesztfuttatás: rögzítjük a béta állapotot.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk27-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

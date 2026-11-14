@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 11. blokk: A cég tudástára: RAG és vektoradatbázis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../10/" style="color:#B8C4D6;text-decoration:none">← 10. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../12/" style="color:#B8C4D6;text-decoration:none">12. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 11. blokk</span>
+    <h1>A cég tudástára: RAG és vektoradatbázis</h1>
+    <p>A nyelvi modell nem ismeri a Bolyai Labs árait és szabályait – ha megkérdezed, kitalál valamit. Ma odaadjuk neki a cég saját dokumentumait: darabolva, vektorrá alakítva, kereséssel. A válasz csak a dokumentumokból jöhet, forrásmegjelöléssel.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#11</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Kulcs nélkül is: <b>helyi beágyazó</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-11-rag">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/YBSbTukeXdmQqevNX2Bf45">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/10/">A 10. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/12/">A 12. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">Keresés jelentés szerint</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Lépés</th><th scope="col">Mi történik?</th><th scope="col">A kódban</th></tr></thead>
+          <tbody>
+            <tr><td>1. Darabolás</td><td>a dokumentumokból 60 szavas darabok, a szomszédok 15 szót közösen tartalmaznak</td><td><code>darabol</code></td></tr>
+            <tr><td>2. Beágyazás</td><td>minden darabból vektor; a hasonló jelentésű szövegek vektorai közel vannak</td><td><code>beagyazo.py</code></td></tr>
+            <tr><td>3. Keresés</td><td>a kérdéshez a koszinusz-hasonlóság szerint legközelebbi 3 darab</td><td><code>koszinusz</code>, <code>VektorTar.keres</code></td></tr>
+            <tr class="hl"><td>4. Generálás</td><td>a modell csak a 3 darabból válaszolhat, forrással; különben „Nem tudom”</td><td><code>rag_prompt</code>, <code>valaszol</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Miért darabolunk?</h3><p>Az egész tudástár nem fér (és nem is érdemes) a promptba. Túl kicsi darabban kevés az összefüggés, túl nagyban több téma keveredik. Az átfedés megóvja a darabhatárra eső mondatot.</p></div>
+        <div class="card"><h3>Koszinusz-hasonlóság</h3><p><code>cos θ = a·b / (|a|·|b|)</code>. Az irány számít, nem a hossz: 1 = azonos irány, 0 = semmi köze. Például (4, 3) és (3, 4) között 24/25 = 0,96.</p></div>
+      </div>
+      <div class="card"><h3>Kétféle beágyazó</h3><p>A <b>helyi TF-IDF</b> közös betűcsoportokat keres: gyors, kulcs nélkül fut, a magyar ragozást is jól bírja („számla”, „számlát”) – de a „szombat” és a „hétvége” neki két különböző dolog. A <b>szemantikus beágyazómodell</b> (gemini-embedding-001) a jelentést fogja meg. Hogy ez a mi kérdéseinken mennyit ér, azt a 2. órán megmérjük.</p></div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #11 · 2. óra · Dokumentum-kereső modul</span>
+      <h2 id="h-kartya">Válasz a cég saját dokumentumaiból</h2>
+      <div class="card story">„Ügyfélszolgálati vezetőként szeretném, ha az asszisztens a cég saját dokumentumaiból válaszolna – és mindig megmondaná, melyikből. Ha a válasz nincs a dokumentumokban, mondja azt, hogy „Nem tudom”, ne találjon ki semmit.”</div>
+      <div class="callout"><span class="eyebrow">Hogyan tesztel a CI kulcs nélkül?</span><p>A keresés minőségét a <b>helyi TF-IDF beágyazóval</b> méri (hit@3 ≥ 9/10 a tesztkérdéseken). A válaszadást ugyanaz az <b>ál-LLM-szerver</b> ellenőrzi, mint a 10. blokkban – most egy <code>/embeddings</code> végponttal kiegészítve. Valódi kulcs csak az élő próbához és a Gemini-méréshez kell.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · VS Code-ban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és környezet</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-11-rag">sablonrepón</a>: <b>Use this template</b>, név <code>rag-</code> + osztálykód + sorszám, <b>Public</b>. Aztán:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/rag-13b-07.git
+cd rag-13b-07
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>7 failed, 3 errors, 3 passed. Az „error” is piros: ezek a tesztek a darabolás nélkül el sem tudnak indulni. Nézz bele a <code>tudastar</code> mappába: ez a cég 8 dokumentuma.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>darabol</h3></div>
+          <div class="stepbody">
+            <p>A <code>rag.py</code>-ban: szavakra bontás, lépésköz <code>meret - atfedes</code>, a darabok <code>meret</code> szó hosszúak. A csapda: ha egy darab elérte a szöveg végét, <b>lépj ki</b> – ne jöjjön utána még egy, csupa ismétlésből álló darab. Utána <code>python -m pytest tests/test_darabolas.py</code>: 5 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>koszinusz és VektorTar.keres</h3></div>
+          <div class="stepbody">
+            <p><code>a @ b / (norma(a) · norma(b))</code>, nullvektornál 0.0. A keresés: a kérdés vektorát minden tárolt vektorral összeveted, csökkenő pontszám szerint rendezel, és az első <code>k</code> elemet adod vissza <code>(pontszam, darab)</code> párokként. Ezzel zöld lesz a minőségi teszt is: a 10 alap kérdésből legalább 9-nél a jó dokumentum az első 3 találatban van.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>rag_prompt és valaszol</h3></div>
+          <div class="stepbody">
+            <p>A prompt: rendszerüzenet (<code>RENDSZER</code>) + egy felhasználói üzenet a sorszámozott forrásokkal (<code>[1] (arazas.md) …</code>) és a végén a kérdéssel. A <code>valaszol</code> a 10. blokk <code>json_valasz</code> függvényét hívja, és kiszűri azokat a forrásokat, amelyek nem voltak a találatok között. „Nem tudom” esetén üres a forráslista. Mind a 13 teszt zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Mérés: MERES.md</h3></div>
+          <div class="stepbody">
+            <p>Futtasd le a mérést több beállítással:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python ertekel.py
+python ertekel.py 30 5
+python ertekel.py 100 20</pre></div>
+            <p>Ha van Gemini-kulcsod (18 év felett), másold át a 10. blokk <code>.env</code> fájlját, és írd bele: <code>LLM_EMBED_MODEL=gemini-embedding-001</code>. Így az <code>ertekel.py</code> a Gemini-beágyazóval mér. Hozd létre a <code>MERES.md</code> fájlt a README-ben lévő táblázattal, és írd le: melyik nehéz kérdésnél tévedett a helyi kereső, és miért?</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Élő próba és push</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python kereso.py "Mennyi a diákkedvezmény?"
+python kereso.py "Ki nyerte a 2026-os vb-t?"
+git status
+git add rag.py MERES.md
+git commit -m "feat: dokumentum-kereső modul (feladatkártya #11)"
+git push</pre></div>
+            <p>A második kérdésre a helyes válasz: „Nem tudom”. A <code>git status</code> listájában a <code>.env</code> nem lehet ott. Az Actions fülön a <b>Feladatkártya 11</b> futás legyen zöld, aztán a repó linkje a Teams-feladatba.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">A teljes folyamat VS Code-ban</h2>
+      <video controls preload="metadata" src="media/rag_utmutato_11.mp4" aria-label="Videó: darabolás, koszinusz és keresés, forrásalapú válasz, tesztek, mérés és push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 11” futás mind a 13 tesztje sikeres. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Mérés</td><td class="num">1</td><td>A <code>MERES.md</code>-ben legalább két beállítás eredménye és egy mondat a nehéz kérdésekről.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: dokumentum-kereső modul (feladatkártya #11)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz, a 2. óra végéig.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> írj egy kilencedik dokumentumot a <code>tudastar</code> mappába és hozzá két új nehéz kérdést – vagy cseréld a szavas darabolást mondathatárosra, és mérd meg, javít-e.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>A darabolás végtelen ciklusba kerül</summary><div><p>A lépésköz 0 lett (átfedés = méret). A függvény elején lévő ellenőrzés ezt kiszűri – ne töröld ki.</p></div></details>
+      <details><summary>„A szomszédos darabok 15 szót közösen tartalmazzanak” – hibás</summary><div><p>A lépésköz <code>meret - atfedes</code> legyen, ne <code>meret</code>.</p></div></details>
+      <details><summary>Az utolsó darab csak ismétlés</summary><div><p>Ha a darab vége (<code>eleje + meret</code>) elérte a szöveg végét, <code>break</code>.</p></div></details>
+      <details><summary>A keresés mindig a legrosszabb darabokat adja</summary><div><p>A rendezés növekvő: hiányzik a <code>reverse=True</code>. Vagy nem a pontszám, hanem az index szerint rendezel.</p></div></details>
+      <details><summary>404 az /embeddings címre</summary><div><p>A <code>LLM_EMBED_MODEL</code> elírás, vagy a cím végéről hiányzik az <code>/openai</code> (ugyanaz a cím kell, mint a chatnél).</p></div></details>
+      <details><summary>429 az ertekel.py futásakor</summary><div><p>Elérted az ingyenes keret percenkénti korlátját. Várj egy percet, és futtasd újra.</p></div></details>
+      <details><summary>A .env megjelent a git status listájában</summary><div><p>Hiányzik a <code>.gitignore</code>-ból. Ha már commitoltad: <code>git rm --cached .env</code>, és szólj a tanárnak, mert a kulcsot cserélni kell.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miért talál ki a nyelvi modell választ a Bolyai Labs áraira, és hogyan segít ezen a RAG?</li>
+        <li>Miért kell átfedés a darabok között?</li>
+        <li>Melyik kérdésnél tévedett a helyi kereső, és miért?</li>
+        <li>Miért szűri a program a modell által megadott forrásokat?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 12. blokk</span><h3 style="margin-top:8px">Gondolkodj, aztán cselekedj – ReAct-ágensek</h3><p>Ma mi döntöttük el, hogy a program mindig keres, aztán válaszol. Jövő héten a modell maga dönti el, mikor melyik eszközt használja – például ezt a keresőt.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk11-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

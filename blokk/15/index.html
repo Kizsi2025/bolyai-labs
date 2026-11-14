@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 15. blokk: Munkamegosztás: ágens-munkafolyamatok</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../14/" style="color:#B8C4D6;text-decoration:none">← 14. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../16/" style="color:#B8C4D6;text-decoration:none">16. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 15. blokk</span>
+    <h1>Munkamegosztás: ágens-munkafolyamatok</h1>
+    <p>Ugyanaz a négyfős csapat, kétféle munkarendben: sorban, előre kijelölt felelősökkel – és egy Projektvezetővel, aki futás közben osztja ki a munkát. Közben ellenőrző kapuk vigyáznak arra, hogy hibás kód ne mehessen tovább.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#15</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Mérés: <b>kulcs nélkül</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-15-folyamat">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/Qt5k96FgC86nJT5y7mXW1S">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/14/">A 14. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/16/">A 16. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">Ki osztja ki a munkát?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col"></th><th scope="col">Szekvenciális</th><th scope="col">Hierarchikus</th></tr></thead>
+          <tbody>
+            <tr><td>CrewAI</td><td><code>Process.sequential</code></td><td><code>Process.hierarchical</code> + <code>manager_agent</code></td></tr>
+            <tr><td>Ki dönt?</td><td>mi, előre (a tasks.yaml <code>agent</code> mezője)</td><td>a Projektvezető, futás közben (<code>delegate_work_to_coworker</code>)</td></tr>
+            <tr><td>LLM-hívás (ál-LLM-mel mérve)</td><td>6</td><td>14</td></tr>
+            <tr class="hl"><td>Mikor jobb?</td><td>ha a lépések és a felelősök előre ismertek</td><td>ha a feladatok változatosak, és futás közben derül ki, kié</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Ellenőrző kapu (guardrail)</h3><p>A <code>Task(guardrail=...)</code> függvény a feladat eredményét kapja. <code>(True, eredmény)</code>: mehet tovább. <code>(False, "visszajelzés")</code>: a CrewAI visszaküldi ugyanannak az ágensnek – „Previous attempt failed validation: …” –, legfeljebb <code>guardrail_max_retries</code>-szor.</p></div>
+        <div class="card"><h3>Jó visszajelzés</h3><p>Az ágens csak abból tud javítani, amit kap. „Hibás.” – rossz. „A dij.py szintaktikai hibás (invalid syntax, 1. sor). Javítsd, és mentsd újra.” – jó: melyik fájl, hol, mi a baj, mi a teendő.</p></div>
+      </div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #15 · 2. óra · Csapat-ágens implementáció</span>
+      <h2 id="h-kartya">Két munkarend, egy minőségkapu</h2>
+      <div class="card story">„Fejlesztési vezetőként szeretném kipróbálni a csapatot kétféle munkarendben: rögzített sorrendben és egy projektvezetővel, aki maga osztja ki a munkát. Hibás kód ne mehessen tovább a Tesztelőhöz: menjen vissza a Programozónak, a hiba leírásával.”</div>
+      <div class="callout"><span class="eyebrow">Mérés kulcs nélkül</span><p>A <code>tests/al_llm.py</code> egy <b>ál-LLM-szerver</b>: a rendszerpromptból látja, melyik szerep kérdezi, a Projektvezetőnek delegálással, a Programozónak és a Tesztelőnek fájlmentéssel válaszol. Ezt használják a tesztek és az <code>osszehasonlit.py</code> is – így bárki megmérheti a két folyamatot, valódi modell nélkül.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · VS Code-ban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és környezet</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-15-folyamat">sablonrepón</a>: <b>Use this template</b>, név <code>folyamat-</code> + osztálykód + sorszám, <b>Public</b>. Python 3.12, mint a 14. blokkban:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/folyamat-13b-07.git
+cd folyamat-13b-07
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>12 piros, 2 zöld. A 14. blokk csapata (szerepek, feladatok, jogosultságok, eszközök) kész.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>A kódkapu: kod_ellenor</h3></div>
+          <div class="stepbody">
+            <p>Sorban ellenőrizd a <code>kimenet/dij.py</code>-t, és az első hibánál add vissza <code>(False, "visszajelzés")</code>: létezik-e; <code>ast.parse</code> sikerül-e (a hiba sorával); van-e függvény; mindegyiknek van-e docstringje; nincs-e tiltott import (<code>TILTOTT_IMPORTOK</code>, az <code>import os.path</code> is!). Ha minden rendben: <code>(True, eredmeny)</code>. A visszatérési típus pontosan <code>tuple[bool, Any]</code> legyen.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>A tesztkapu: teszt_ellenor</h3></div>
+          <div class="stepbody">
+            <p>A <code>kimenet/test_dij.py</code>: létezik, szintaktikailag helyes, importálja a <code>dij</code> modult, és legalább 3 <code>test_</code> kezdetű függvénye van. <code>tests/test_kapuk.py</code>: 6 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>A projektvezető és a hierarchikus csapat</h3></div>
+          <div class="stepbody">
+            <p>A <code>config/agents.yaml</code> végén töltsd ki a <code>projektvezeto</code> szerepet (benne: mit <b>nem</b> csinál). A <code>hierarchikus()</code>-ban: a vezető <code>allow_delegation=True</code>, eszköz nélkül; a munkások a <code>ugynokok(llm)</code>; a feladatok <code>feladatok(None)</code> (nincs előre kijelölt felelős); <code>process=Process.hierarchical</code>, <code>manager_agent=vezeto</code> – a vezető nem kerül az <code>agents</code> listába. <code>tests/test_folyamat.py</code>: zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Mérés: MUNKAFOLYAMAT.md</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python osszehasonlit.py
+python osszehasonlit.py --rossz</pre></div>
+            <p>Kulcs nélkül fut, a tesztek ál-LLM-jével. Írd a táblázatba: ki dönti el, ki mit csinál; hány LLM-hívás; milyen sorrendben; mikor jobb az egyik vagy a másik. A <code>--rossz</code> futásban a Programozó először hibás kódot ment – mit csinált a kapu? Mind a 14 teszt zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Élő futás (ha van kulcsod) és push</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python folyamat.py hierarchikus "díjszámító függvény a havi tokenhasználatból"
+git status
+git add folyamat.py config MUNKAFOLYAMAT.md
+git commit -m "feat: szekvenciális és hierarchikus munkafolyamat kapukkal (feladatkártya #15)"
+git push</pre></div>
+            <p>A valódi vezető kinek osztotta ki a feladatokat? Volt visszaküldés? Írd a <code>MUNKAFOLYAMAT.md</code> végére. A hierarchikus futás sok hívás: 429-es hiba és több perc várható.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">A teljes folyamat VS Code-ban</h2>
+      <video controls preload="metadata" src="media/folyamat_utmutato_15.mp4" aria-label="Videó: ellenőrző kapu, hierarchikus csapat projektvezetővel, mérés, visszaküldés és push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 15” futás mind a 14 tesztje sikeres. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Összehasonlítás</td><td class="num">1</td><td>A <code>MUNKAFOLYAMAT.md</code> mért számokkal és érdemi indoklással. Ezt a tanár értékeli.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: szekvenciális és hierarchikus munkafolyamat kapukkal (feladatkártya #15)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz, a 2. óra végéig.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> új kapu a Tervező feladatára (a specifikációban legalább öt „→” jelű tesztpélda legyen), tesztekkel.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>ValidationError: If return type is annotated, it must be Tuple[bool, Any]</summary><div><p>A kapu visszatérési típusa pontosan <code>tuple[bool, Any]</code> legyen (<code>from typing import Any</code>).</p></div></details>
+      <details><summary>Hiba a manager_agent miatt</summary><div><p>A vezető nem lehet benne az <code>agents</code> listában, és ne kapjon eszközt.</p></div></details>
+      <details><summary>test_hierarchikus_felepites: csak a vezető delegálhat</summary><div><p>A munkások <code>allow_delegation=False</code>, a vezető <code>True</code>.</p></div></details>
+      <details><summary>A feladatoknak van felelőse hierarchikusan</summary><div><p><code>feladatok(None)</code> – a vezető osztja ki őket.</p></div></details>
+      <details><summary>test_visszakuldes: csak egy kódmentés</summary><div><p>A <code>kod_ellenor</code> szintaktikai hibánál nem <code>(False, …)</code>-t ad vissza.</p></div></details>
+      <details><summary>Az import os.path átmegy a kapun</summary><div><p>Az import nevének első részét vizsgáld: <code>a.name.split(".")[0]</code>.</p></div></details>
+      <details><summary>Élőben a vezető maga válaszol, nem delegál</summary><div><p>A backstoryban legyen egyértelmű, hogy nem dolgozik maga. A modell mérete is számít.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Ki dönti el, ki mit csinál a szekvenciális, és ki a hierarchikus folyamatban?</li>
+        <li>Mit kap vissza az ágens, ha az ellenőrző kapu elutasítja a munkáját?</li>
+        <li>Miért több hívás a hierarchikus folyamat ugyanarra az eredményre?</li>
+        <li>Miért fontos, hogy a kapu visszajelzése konkrét legyen?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 16. blokk</span><h3 style="margin-top:8px">Önjavító kód – Hibajavító ágenshurok</h3><p>A mai kapu csak ránézett a kódra. Jövő héten le is futtatjuk: a tesztek hibáját az ágens maga értelmezi és javítja – biztonságos környezetben, lépéskorláttal.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk15-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

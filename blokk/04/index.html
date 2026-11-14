@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 4. blokk: Neuronok a gépben: az első neurális háló</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../03/" style="color:#B8C4D6;text-decoration:none">← 3. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../05/" style="color:#B8C4D6;text-decoration:none">5. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 4. blokk</span>
+    <h1>Neuronok a gépben: az első neurális háló</h1>
+    <p>Az 1. órán papíron megérted, mit csinál egy neuron és hogyan tanul egy háló. A 2. órán ugyanezt lekódolod PyTorchban, és a hívásjóslót neurális hálóval is megépíted.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#4</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Eszköz: <b>PyTorch, Colab</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-04-neuron">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/Rqgfi8nY99ppziWpFLFRC8">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/03/">A 3. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/05/">Az 5. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">Mit csinál egy neuron?</h2>
+      <div class="grid2">
+        <div class="card"><h3>Három lépés</h3><p>Megszorozza a bemeneteket a súlyokkal, összeadja őket, hozzáadja az eltolást: <code>z = x · w + b</code>. Végül aktivál: <code>σ(z) = 1 / (1 + e⁻ᶻ)</code>, ami 0 és 1 közé szorítja az eredményt.</p></div>
+        <div class="card"><h3>Ismerős?</h3><p>A 3. blokk logisztikus regressziója pontosan egy ilyen neuron volt: három bemenet, három súly, egy eltolás, szigmoid.</p></div>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Kézi neuron</th><th scope="col">x</th><th scope="col">w</th><th scope="col">b</th><th scope="col">z</th><th scope="col">σ(z)</th></tr></thead>
+          <tbody>
+            <tr><td>1.</td><td>(1; 2)</td><td>(0,5; −0,25)</td><td>0,1</td><td>0,1</td><td>0,525</td></tr>
+            <tr><td>2.</td><td>(2; 0)</td><td>(1; 1)</td><td>−1</td><td>1</td><td>0,731</td></tr>
+            <tr><td>3.</td><td>(0; 3)</td><td>(0,5; −1)</td><td>0,5</td><td>−2,5</td><td>0,076</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Fogalom</th><th scope="col">Jelentés</th></tr></thead>
+          <tbody>
+            <tr><td>XOR</td><td>Akkor 1, ha a két bemenet különbözik. Egy neuron döntési határa egyenes, ezért a XOR-t nem tudja megoldani.</td></tr>
+            <tr><td>Rejtett réteg, ReLU</td><td>Neuronok a bemenet és a kimenet között. A ReLU (max(0, z)) „megtöri” az egyenest; nélküle két réteg is csak egyenes lenne.</td></tr>
+            <tr><td>Veszteség</td><td>Egy szám, ami megmondja, mennyire téved a háló. A tanulás célja ennek csökkentése.</td></tr>
+            <tr><td>Gradiens, visszaterjesztés</td><td>Minden súlyra kiszámoljuk, merre csökken a veszteség (<code>backward()</code>).</td></tr>
+            <tr><td>Tanulási ráta (lr)</td><td>Mekkorát lépünk a súlyokkal. Túl nagy: átugorjuk a völgyet; túl kicsi: lassan érünk le.</td></tr>
+            <tr><td>Epoch</td><td>Egy teljes kör a tanítóadaton.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #4 · 2. óra</span>
+      <h2 id="h-kartya">Neuronok a gépben</h2>
+      <div class="card story">„Fejlesztőként szeretném a hívásjóslót neurális hálóval is megépíteni (PyTorch), hogy később képekre és szövegre is bővíthessük.”</div>
+      <div class="card">
+        <h3>Elfogadási feltételek</h3>
+        <ul>
+          <li>saját repó a sablonból (például <code>neuron-13b-07</code>, Public)</li>
+          <li>a <code>neuron_halo.ipynb</code> TODO-jai (a–d) kitöltve, az önellenőrzés lefut</li>
+          <li>visszamentve Colabból, a megadott commitüzenettel</li>
+          <li>az Actions fülön a <b>Feladatkártya 4</b> futás zöld</li>
+          <li>a repó linkje beadva a Teams-feladatba</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · Colabban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és Colab</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-04-neuron">sablonrepón</a>: <b>Use this template</b>, név <code>neuron-</code> + osztálykód + sorszám, <b>Public</b>. Utána Colabban: <b>File → Open notebook → GitHub</b> → saját repó → <code>neuron_halo.ipynb</code>. A PyTorch a Colabban előre telepítve van, GPU nem kell.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>a) Kézi neuron</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>def neuron(x, w, b):
+    return torch.sigmoid(x @ w + b)</pre></div>
+            <p>A várt érték: <b>0,525</b> – ugyanannyi, mint az 1. órán papíron (z = 0,1).</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>b) A tanítási ciklus</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>opt.zero_grad()
+veszteseg = lossfv(modell(X), y)
+veszteseg.backward()
+opt.step()</pre></div>
+            <p>A négy sor a ciklus belsejébe kerül, a meglévő behúzással (8 szóköz).</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>c) XOR: kétrétegű háló</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>xor_halo = nn.Sequential(nn.Linear(2, 8), nn.ReLU(), nn.Linear(8, 1))</pre></div>
+            <p>Az egy neuron 0,75-ön ragad, a háló pontossága <b>1,0</b>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>d) Hívásjósló háló: 3 → 8 → 1</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>halo = nn.Sequential(nn.Linear(3, 8), nn.ReLU(), nn.Linear(8, 1))</pre></div>
+            <p>41 paraméter, a veszteség kb. 0,76-ról 0,33-ra csökken, a pontosság kb. <b>0,82</b>. Utána futtasd az önellenőrző cellát.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Mentés, zöld build, beadás</h3></div>
+          <div class="stepbody">
+            <p><b>File → Save a copy in GitHub</b> → saját repó, <code>main</code>, fájlnév <code>neuron_halo.ipynb</code>. Commitüzenet:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>feat: első neurális háló (feladatkártya #4)</pre></div>
+            <p>Az Actions fülön a <b>Feladatkártya 4</b> futás legyen zöld (az első futás 2–3 perc, mert telepíti a PyTorch-ot). Utána add be a repó linkjét a Teams-feladatba.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="card"><h3>Jobb lett, mint a logisztikus regresszió?</h3><p>Nem: kb. 0,82 a 0,828-cal szemben. Három jellemzőből egy neuron is kihozza, ami benne van. A háló ott erős, ahol sok és összetett a bemenet – képeknél és szövegnél. A pontos szám gépenként kicsit eltérhet, ezért a CI küszöbbel ellenőriz (pontosság ≥ 0,79, felidézés ≥ 0,50).</p></div>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 1 perc 27 mp · felirattal</span>
+      <h2 id="h-video">A teljes folyamat Colabban</h2>
+      <video controls preload="metadata" src="media/neuron_utmutato_4.mp4" aria-label="Videó: az első neurális háló Colabban, a mentés és a CI"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 4” futás mind az 5 tesztje sikeres.</td></tr>
+            <tr><td>Határidő</td><td class="num">1</td><td>A 2. óra végéig.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: első neurális háló (feladatkártya #4)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> a notebook Extra részében próbáld ki 16 rejtett neuronnal és <code>lr=0.005</code>-tel, és írd le két mondatban, mi változott a tanulási görbén.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>A veszteség nem csökken</summary><div><p>Kimaradt az <code>opt.step()</code> vagy a <code>veszteseg.backward()</code>.</p></div></details>
+      <details><summary>A veszteség ugrál, elszáll</summary><div><p>Kimaradt az <code>opt.zero_grad()</code>: a gradiensek körről körre összeadódnak.</p></div></details>
+      <details><summary>mat1 and mat2 shapes cannot be multiplied</summary><div><p>Az első réteg bemenete nem egyezik a jellemzők számával: a XOR-nál <code>nn.Linear(2, 8)</code>, a hívásjóslónál <code>nn.Linear(3, 8)</code>.</p></div></details>
+      <details><summary>A XOR-háló 0,75-ön marad</summary><div><p>Nincs <code>nn.ReLU()</code> a két réteg között.</p></div></details>
+      <details><summary>AttributeError: 'ellipsis' object …</summary><div><p>Egy TODO még nincs kitöltve: a <code>...</code> helyére írd a megoldást.</p></div></details>
+      <details><summary>„Copy of …” néven mentett</summary><div><p>A fájlnév pontosan <code>neuron_halo.ipynb</code> legyen, különben a CI nem találja.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Mi a három lépés, amit egy neuron a bemenetével csinál?</li>
+        <li>Miért nem tudja egyetlen neuron megoldani a XOR-t?</li>
+        <li>Mi történik a <code>veszteseg.backward()</code> sorban?</li>
+        <li>A háló olyan jó, mint a logisztikus regresszió. Miért érdemes mégis neurális hálót tanulni?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 5. blokk</span><h3 style="margin-top:8px">A gép lát – CNN és objektumdetektálás</h3><p>Egy 28 × 28-as kép már 784 bemenet. Ha minden pixelt minden neuronhoz kötnénk, elszállna a paraméterek száma: ehhez konvolúciós háló kell.</p></div>
+    </section>
+  </main>
+</div>
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk4-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

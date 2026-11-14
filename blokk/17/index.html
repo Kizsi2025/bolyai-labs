@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 17. blokk: Ágens, aki emlékszik: memória és állapot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../16/" style="color:#B8C4D6;text-decoration:none">← 16. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../18/" style="color:#B8C4D6;text-decoration:none">18. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 17. blokk</span>
+    <h1>Ágens, aki emlékszik: memória és állapot</h1>
+    <p>A modell minden hívásnál újrakezd: az ágens „emlékezete” a programban van. Ma megírod a rövid távú memóriát (mi fér a kontextusba), a hosszú távút (mi marad meg újraindítás után is – és mi soha) és egy hibajegy állapotgépét.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#17</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Tesztek: <b>kulcs nélkül</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-17-memoria">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/D5kJUsZr2erQFKeZmMFLDr">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/16/">A 16. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/18/">A 18. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">Háromféle emlékezet</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col"></th><th scope="col">Rövid távú</th><th scope="col">Hosszú távú</th><th scope="col">Állapot</th></tr></thead>
+          <tbody>
+            <tr><td>Osztály</td><td><code>RovidMemoria</code></td><td><code>HosszuMemoria</code></td><td><code>Jegy</code></td></tr>
+            <tr><td>Mit tárol?</td><td>a legújabb üzeneteket</td><td>ügyfelenkénti tényeket</td><td>a hibajegy állapotát és naplóját</td></tr>
+            <tr><td>Hol?</td><td>a memóriában (a listában)</td><td><code>adat/memoria.json</code></td><td><code>adat/&lt;ügyfél&gt;_jegy.json</code></td></tr>
+            <tr class="hl"><td>Meddig?</td><td>a futás végéig, karakterkerettel</td><td>amíg az ügyfél nem kéri a törlést</td><td>a lezárásig (újranyitható)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Csúszó ablak</h3><p>Visszafelé gyűjtjük az üzeneteket, amíg beleférnek a keretbe. 25 karakteres keretnél és négy 10 karakteres üzenetnél a két legújabb marad, előttük a jelzés: „(2 korábbi üzenet kimaradt)”. A rendszerüzenet mindig megmarad.</p></div>
+        <div class="card"><h3>Felelős memória</h3><p>Atomikus mentés (ideiglenes fájl + <code>os.replace</code>), sérült fájl esetén biztonságos újrakezdés, és soha nem jegyzünk meg jelszót, API-kulcsot vagy kártyaszámot. Kérésre mindent törlünk – ez adatvédelmi kötelezettség is.</p></div>
+      </div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #17 · 2. óra · Állapotkövető ágens</span>
+      <h2 id="h-kartya">Emlékezzen – felelősen</h2>
+      <div class="card story">„Ügyfélszolgálati vezetőként azt szeretném, hogy az asszisztens emlékezzen a visszatérő ügyfelekre, és újraindítás után is kövesse a hibajegyük állapotát – de jelszót soha ne jegyezzen meg, és kérésre mindent töröljön.”</div>
+      <div class="callout"><span class="eyebrow">A modell javasol, a program dönt</span><p>Az <code>asszisztens.py</code> kész: JSON-ban kér választ a modelltől (<code>valasz</code>, <code>megjegyez</code>, <code>allapot</code>). Ha a modell titkot akar megjegyezni vagy tiltott állapotváltást javasol, a te kódod utasítja el – az asszisztens ilyenkor figyelmeztetést ír ki, és megy tovább.</p></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · VS Code-ban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és környezet</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-17-memoria">sablonrepón</a>: <b>Use this template</b>, név <code>memoria-</code> + osztálykód + sorszám, <b>Public</b>. Aztán:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/memoria-13b-07.git
+cd memoria-13b-07
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m pytest -q</pre></div>
+            <p>27 piros, 3 zöld. Nincs CrewAI: a 10. blokk kliense és a te <code>memoria.py</code>-d dolgozik.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>Rövid távú: RovidMemoria.kontextus</h3></div>
+          <div class="stepbody">
+            <p>Az eredmény: <code>[rendszerüzenet]</code>, ha kimaradt üzenet, akkor a <code>"(N korábbi üzenet kimaradt)"</code> jelzés, majd a legújabb üzenetek <b>időrendben</b>, amelyek együtt legfeljebb <code>max_karakter</code> hosszúak. A legutolsó üzenet akkor is bekerül, ha egymagában hosszabb a keretnél. <code>tests/test_rovid.py</code>: 5 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>Hosszú távú: HosszuMemoria</h3></div>
+          <div class="stepbody">
+            <p><code>_ment</code>: előbb <code>.tmp</code> fájl, aztán <code>os.replace</code>. <code>megjegyez</code>: <code>ValueError</code>, ha a kulcs a <code>TILTOTT_KULCSOK</code> között van (kisbetűsítve!) vagy az érték illeszkedik a <code>TITOK_MINTA</code>-ra. <code>felidez</code>: másolatot adj vissza. <code>elfelejt</code>: töröl és ment. Sérült fájlnál a konstruktor <code>.serult</code> néven félreteszi, és üresen indul. <code>tests/test_hosszu.py</code>: 10 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Állapot: Jegy</h3></div>
+          <div class="stepbody">
+            <p><code>atmenet(uj)</code>: ismeretlen állapot vagy az <code>ATMENETEK</code> szerint nem engedélyezett váltás → <code>ValueError</code>, és <b>semmi nem változik</b>. Ha szabad: napló (<code>honnan</code>, <code>hova</code>, <code>ido</code>), aztán váltás. <code>ment</code> és <code>betolt</code> JSON-ban; ismeretlen mentett állapot → <code>ValueError</code>. <code>tests/test_allapot.py</code>: 8 zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>ALLAPOT.md: diagram és memóriaterv</h3></div>
+          <div class="stepbody">
+            <p>Rajzold meg a Mermaid <code>stateDiagram-v2</code>-t (<code>[*] --&gt; uj</code>, és minden átmenet egy nyíl). A teszt összeveti a nyilakat az <code>ATMENETEK</code> táblázattal – se több, se kevesebb. Töltsd ki a memóriatáblázatot is: mi hová kerül, meddig, és mi az, amit soha nem tárolunk. Mind a 30 teszt zöld.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Élő próba (ha van kulcsod) és push</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python asszisztens.py ugyfel42
+git status
+git add memoria.py ALLAPOT.md
+git commit -m "feat: állapotkövető asszisztens memóriával (feladatkártya #17)"
+git push</pre></div>
+            <p>Mondd meg a csomagodat és a gondodat, lépj ki (<code>/kilep</code>), indítsd újra: emlékszik? Próbálj megadni egy kitalált jelszót is. Végül <code>/torles</code>. Az <code>adat/</code> mappa és a <code>.env</code> <b>nem</b> lehet a <code>git status</code> listájában.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">A három memória VS Code-ban</h2>
+      <video controls preload="metadata" src="media/memoria_utmutato_17.mp4" aria-label="Videó: csúszó ablak, atomikus mentés titok-tiltással, a hibajegy állapotgépe, tesztek és push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 17” futás mind a 30 tesztje sikeres. Ha a <code>.env</code>, egy kulcs vagy az <code>adat/</code> mappa felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Memóriaterv</td><td class="num">1</td><td>Az <code>ALLAPOT.md</code> táblázata érdemi indoklással. Ezt a tanár értékeli.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: állapotkövető asszisztens memóriával (feladatkártya #17)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz, a 2. óra végéig.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> összefoglaló memória – ha üzenetek esnének ki az ablakból, a modell egy mondatban foglalja össze őket, és ez kerüljön a jelzés helyére. Tesztekkel, ál-LLM-mel.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>A kontextusban fordított sorrendben vannak az üzenetek</summary><div><p>Visszafelé gyűjtesz – a végén <code>valogatott.reverse()</code>.</p></div></details>
+      <details><summary>Egy túl hosszú utolsó üzenetnél üres a kontextus</summary><div><p>Az első (legújabb) üzenetet mindig vedd fel: <code>if valogatott and hossz + … &gt; max_karakter: break</code>.</p></div></details>
+      <details><summary>A „Jelszo” kulcs átmegy a tiltáson</summary><div><p>Kisbetűsíts: <code>kulcs.lower() in TILTOTT_KULCSOK</code>.</p></div></details>
+      <details><summary>test_atomikus: nincs .tmp vagy megmarad</summary><div><p>Az ideiglenes fájlba írj, és <code>os.replace(ideiglenes, self.fajl)</code> – az átnevezés eltünteti a <code>.tmp</code>-t.</p></div></details>
+      <details><summary>Tiltott átmenet után mégis bekerül a naplóba</summary><div><p>Előbb ellenőrizz és dobj hibát, csak utána naplózz és válts.</p></div></details>
+      <details><summary>test_terv: a diagram nem egyezik</summary><div><p>A nyilak pontosan <code>honnan --&gt; hova</code> alakúak legyenek, az állapotnevek ékezet nélkül, mint a kódban. A <code>[*] --&gt; uj</code> kezdőnyíl nem számít átmenetnek.</p></div></details>
+      <details><summary>Az adat/ mappa megjelenik a git statusban</summary><div><p>Ne töröld a <code>.gitignore</code>-ból. Ha már hozzáadtad: <code>git rm -r --cached adat</code>.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Hol van egy ágens emlékezete, ha a modell maga semmire nem emlékszik?</li>
+        <li>Mondj egy adatot, amit az asszisztens soha nem jegyezhet meg, és indokold!</li>
+        <li>Miért mentünk előbb ideiglenes fájlba?</li>
+        <li>Miért ellenőrzi a program a modell által javasolt állapotváltást?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 18. blokk</span><h3 style="margin-top:8px">Specifikációból szoftver – Esettanulmány</h3><p>Megvan minden építőelem: eszközök, RAG, csapat, kapuk, önjavítás, memória. Jövő héten egy teljes miniprojekt következik, specifikációból kész, tesztelt szoftverig.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk17-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

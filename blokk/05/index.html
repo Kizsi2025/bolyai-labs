@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 5. blokk: A gép lát: CNN és objektumdetektálás</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+.minta { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; image-rendering: pixelated; }
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../04/" style="color:#B8C4D6;text-decoration:none">← 4. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../06/" style="color:#B8C4D6;text-decoration:none">6. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 5. blokk</span>
+    <h1>A gép lát: CNN és objektumdetektálás</h1>
+    <p>Az 1. órán megérted, hogyan „néz” a gép egy képet. A 2. órán konvolúciós hálót tanítasz a futószalag alkatrészképein, és lefuttatsz egy kész objektumdetektáló modellt (YOLOv8).</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#5</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Teszt: <b>CNN ≥ 93%</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-05-kepek">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/PDai8LuJFQZKUboWju85ou">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/04/">A 4. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/06/">A 6. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#elmelet">Elmélet</a>
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="elmelet" aria-labelledby="h-elmelet">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-elmelet">Hogyan lát a gép?</h2>
+      <div class="grid2">
+        <div class="card"><h3>A kép számok rácsa</h3><p>Egy szürkeárnyalatos képpont 0 (fekete) és 255 (fehér) közötti szám; egy 28 × 28-as kép 784 szám. Színes képen három ilyen rács van.</p></div>
+        <div class="card"><h3>Konvolúció</h3><p>Egy kis 3 × 3-as szűrő végigcsúszik a képen: szoroz és összead. Ahol a mintázatát (például egy élt) megtalálja, ott nagy a válasz.</p></div>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Kézi konvolúció</th><th scope="col">Érték</th></tr></thead>
+          <tbody>
+            <tr><td>Kép (5 × 5)</td><td>minden sor: 0, 0, 1, 1, 1 (bal oldala sötét, jobb oldala világos)</td></tr>
+            <tr><td>Szűrő (3 × 3)</td><td>minden sor: −1, 0, 1 (függőleges élt keres)</td></tr>
+            <tr class="hl"><td>Térkép (3 × 3)</td><td>minden sor: 3, 3, 0 – az élnél nagy, a csupa világos részen 0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Fogalom</th><th scope="col">Jelentés</th></tr></thead>
+          <tbody>
+            <tr><td>CNN</td><td>Konvolúciós háló: ugyanazokat a kis szűrőket használja a kép minden pontján, ezért mindegy, hol van a tárgy.</td></tr>
+            <tr><td>Max pooling</td><td>2 × 2-ből a legnagyobb érték marad: a kép mérete feleződik (28 → 14 → 7).</td></tr>
+            <tr><td>Osztályozás</td><td>Egy címke a teljes képre (például „háromszög”).</td></tr>
+            <tr><td>Objektumdetektálás</td><td>Minden tárgyra: osztály + bizalom + keret.</td></tr>
+            <tr><td>YOLO</td><td>„You Only Look Once”: egyetlen futással nézi az egész képet. A yolov8n 80 osztályon előtanított, kb. 6 MB-os modell.</td></tr>
+            <tr><td>Előtanított modell</td><td>Más már betanította nagy adatkészleten; mi csak használjuk.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #5 · 2. óra</span>
+      <h2 id="h-kartya">A gép lát</h2>
+      <div class="card story">„Minőségellenőrként szeretném, ha a futószalag kamerája magától felismerné az alkatrészeket (kör, négyzet, háromszög, kereszt), és egy kész modell a raktári fotókon az embereket és a járműveket is megtalálná.”</div>
+      <img class="minta" src="media/minta.png" alt="32 mintakép az adatkészletből: körök, négyzetek, háromszögek és keresztek fekete háttéren, különböző helyen és méretben">
+      <div class="card">
+        <h3>Elfogadási feltételek</h3>
+        <ul>
+          <li>saját repó a sablonból (például <code>kepek-13b-07</code>, Public)</li>
+          <li>a <code>kepek.ipynb</code> TODO-jai (a–e) kitöltve, az önellenőrzés lefut</li>
+          <li>visszamentve Colabból, a megadott commitüzenettel</li>
+          <li>az Actions fülön a <b>Feladatkártya 5</b> futás zöld (benne a képosztályozási teszt)</li>
+          <li>a repó linkje beadva a Teams-feladatba</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hét lépés · Colabban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/7</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és Colab</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-05-kepek">sablonrepón</a>: <b>Use this template</b>, név <code>kepek-</code> + osztálykód + sorszám, <b>Public</b>. Utána Colabban: <b>File → Open notebook → GitHub</b> → saját repó → <code>kepek.ipynb</code>. Futtasd az első cellát: 16 alkatrészkép jelenik meg.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>a) Konvolúció kézzel</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>terkep = F.conv2d(kep, szuro)</pre></div>
+            <p>A várt kimenet: minden sor <b>3, 3, 0</b> – ugyanaz, mint az 1. órán papíron.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>b) Alapvonal: MLP</h3></div>
+          <div class="stepbody">
+            <p>Ez kész kód, csak futtasd. A pontosság kb. <b>0,75</b>: az MLP nem tudja, melyik képpont melyiknek a szomszédja.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>c) A CNN felépítése</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>cnn = nn.Sequential(
+    nn.Conv2d(1, 16, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+    nn.Conv2d(16, 32, 3, padding=1), nn.ReLU(), nn.MaxPool2d(2),
+    nn.Flatten(), nn.Linear(32 * 7 * 7, 32), nn.ReLU(),
+    nn.Linear(32, 4),
+)</pre></div>
+            <p>Ellenőrzés: a kimenet <code>torch.Size([1, 4])</code>, a paraméterek száma <b>55 140</b>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>d) Tanítás és képosztályozási teszt</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>tanit(cnn)
+cnn_pont = pontossag(cnn, Xv, yv)</pre></div>
+            <p>Kb. fél perc. <b>A teszt: legalább 93%</b> a 600 tesztképen; a CNN kb. 98%-ot ér el.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>e) YOLOv8</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>emberek = nevek.count("person")</pre></div>
+            <p>Előtte futtasd a <code>%pip install -q ultralytics</code> cellát. A várt eredmény: 1 busz és <b>3 ember</b>. Utána az önellenőrző cella.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s7" aria-label="7. lépés kész">
+          <div class="stephead"><span class="stepnum">7</span><h3>Mentés, zöld build, beadás</h3></div>
+          <div class="stepbody">
+            <p><b>File → Save a copy in GitHub</b> → saját repó, <code>main</code>, fájlnév <code>kepek.ipynb</code>. Commitüzenet:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>feat: képfelismerés CNN-nel és YOLO-val (feladatkártya #5)</pre></div>
+            <p>Az Actions fülön a <b>Feladatkártya 5</b> futás legyen zöld (az első futás 3–4 perc). Utána add be a repó linkjét a Teams-feladatba.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="card"><h3>Hasonló méret, sokkal jobb eredmény</h3><p>Az MLP-nek 50 500, a CNN-nek 55 140 paramétere van, a CNN mégis kb. 98%-os a 75%-kal szemben. Nem a méret számít, hanem az, hogy a szűrő a kép minden pontján ugyanazt a mintázatot keresi.</p></div>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 1 perc 33 mp · felirattal</span>
+      <h2 id="h-video">A teljes folyamat Colabban</h2>
+      <video controls preload="metadata" src="media/kepek_utmutato_5.mp4" aria-label="Videó: CNN és YOLOv8 Colabban, a mentés és a CI"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 5” futás mind az 5 tesztje sikeres, köztük a képosztályozási teszt.</td></tr>
+            <tr><td>Határidő</td><td class="num">1</td><td>A 2. óra végéig.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: képfelismerés CNN-nel és YOLO-val (feladatkártya #5)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Extra (+1 sprintpont):</b> futtasd a YOLO-t <code>conf=0.25</code>-tel, és írd le két mondatban: mi jelent meg pluszban, és mi a kockázata a túl alacsony és a túl magas küszöbnek egy minőségellenőrző kameránál?</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>mat1 and mat2 shapes cannot be multiplied (1x1568 …)</summary><div><p>A <code>Flatten</code> utáni <code>Linear</code> bemenete <code>32 * 7 * 7</code> (1568) legyen; vagy kimaradt egy <code>MaxPool2d(2)</code>.</p></div></details>
+      <details><summary>A paraméterek száma nem 55 140</summary><div><p>Rossz csatornaszám (1 → 16 → 32) vagy hiányzik a <code>padding=1</code>.</p></div></details>
+      <details><summary>A pontosság 0,25 körül marad</summary><div><p>Kimaradt a <code>tanit(cnn)</code> hívás vagy a ReLU-k.</p></div></details>
+      <details><summary>ModuleNotFoundError: No module named 'ultralytics'</summary><div><p>Az e) rész első cellája (<code>%pip install -q ultralytics</code>) nem futott le.</p></div></details>
+      <details><summary>AttributeError: 'ellipsis' object …</summary><div><p>Egy TODO még nincs kitöltve: a <code>...</code> helyére írd a megoldást.</p></div></details>
+      <details><summary>„Copy of …” néven mentett</summary><div><p>A fájlnév pontosan <code>kepek.ipynb</code> legyen, különben a CI nem találja.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Mit csinál egy 3 × 3-as szűrő a képpel?</li>
+        <li>Miben más az osztályozás és az objektumdetektálás kimenete?</li>
+        <li>A CNN-nek és az MLP-nek hasonló a paraméterszáma. Miért tanul mégis jobban a CNN?</li>
+        <li>Mit jelent, hogy a YOLO „előtanított”, és miért hasznos ez egy cégnek?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 6. blokk</span><h3 style="margin-top:8px">Beszélgetés a modellel – LLM és promptolás</h3><p>A YOLO kész modell volt. A nyelvi modellek is azok, csak a bemenet szöveg, és promptokkal irányítjuk őket.</p></div>
+    </section>
+  </main>
+</div>
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk5-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

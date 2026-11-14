@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 3. blokk: Az első modell élesben: sikeres lesz-e a hívás?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../02/" style="color:#B8C4D6;text-decoration:none">← 2. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../04/" style="color:#B8C4D6;text-decoration:none">4. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 3. blokk</span>
+    <h1>Az első modell élesben: sikeres lesz-e a hívás?</h1>
+    <p>Az 1. órán két modellt építesz Scikit-learnnel. A 2. órán jön az év első rangemelő mérése: ha legalább 6 pontot szerzel a 10-ből, Junior fejlesztő leszel.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#3</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>az 1. óra vége</b></span>
+      <span class="fact">2. óra: <b>Junior mérés</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-03-modell">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/546GTdDGYYCZ2VbFhR63xi">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/02/">A 2. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/04/">A 4. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#kartya">Feladatkártya</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#fogalmak">Fogalmak</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#meres">Junior mérés</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="kartya" aria-labelledby="h-kartya">
+      <span class="eyebrow">Feladatkártya #3 · 1. óra</span>
+      <h2 id="h-kartya">Sikeres lesz-e a hívás?</h2>
+      <div class="card story">„Termékfelelősként szeretném tudni előre, melyik MI-hívás fog valószínűleg elbukni, hogy időben átirányíthassuk egy másik modellre.”</div>
+      <div class="card">
+        <h3>Elfogadási feltételek</h3>
+        <ul>
+          <li>saját repó a sablonból (például <code>modell-13b-07</code>, Public)</li>
+          <li>a <code>modell.ipynb</code> négy TODO-ja (a–d) kitöltve, az önellenőrzés lefut</li>
+          <li>visszamentve Colabból, a megadott commitüzenettel</li>
+          <li>az Actions fülön a <b>Feladatkártya 3</b> futás zöld</li>
+          <li>a repó linkje beadva a Teams-feladatba</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · Colabban</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>Saját repó és Colab</h3></div>
+          <div class="stepbody"><p>A <a href="https://github.com/Kizsi2025/bolyai-labs-03-modell">sablonrepón</a>: <b>Use this template</b>, név <code>modell-</code> + osztálykód + sorszám, <b>Public</b>. Utána Colabban: <b>File → Open notebook → GitHub</b> → a repód → <code>modell.ipynb</code>. Ebben a repóban van a 2. órai mérés is.</p></div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>a) Felosztás és alapvonal</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)</pre></div>
+            <p>Utána futtasd az alapvonal cellát: <b>0,712</b>. Ezt kell legyőzni.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>b) Logisztikus regresszió</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>modell = make_pipeline(StandardScaler(), LogisticRegression())</pre></div>
+            <p>A várt pontosság: <b>0,828</b>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>c) Felidézés a bukó hívásokra</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>recall_hiba = recall_score(y_test, jo, pos_label=0)</pre></div>
+            <p>A várt érték: <b>0,667</b>. A <code>pos_label=0</code> nélkül a sikeres hívásokra számolnád.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>d) Regresszió a válaszidőre</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>reg = LinearRegression().fit(Xr_train, yr_train)</pre></div>
+            <p>A MAE kb. <b>47 ms</b>. Utána futtasd az önellenőrző cellát.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Mentés, zöld build, beadás</h3></div>
+          <div class="stepbody">
+            <p><b>File → Save a copy in GitHub</b> → saját repó, <code>main</code>, fájlnév <code>modell.ipynb</code>. Commitüzenet:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>feat: első modellek (feladatkártya #3)</pre></div>
+            <p>Az Actions fülön két futást látsz. A <b>Feladatkártya 3</b> legyen zöld; a <b>Junior mérés</b> most még piros, ez így van rendjén. Utána add be a repó linkjét a Teams-feladatba.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="fogalmak" aria-labelledby="h-fogalmak">
+      <span class="eyebrow">A blokk fogalmai</span>
+      <h2 id="h-fogalmak">Mit mérünk, és miért?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Fogalom</th><th scope="col">Jelentés</th></tr></thead>
+          <tbody>
+            <tr><td>Tanító- és teszthalmaz</td><td>A modell 750 soron tanul, és 250 olyan soron mérjük, amit még nem látott.</td></tr>
+            <tr><td>Alapvonal</td><td>Mindig a leggyakoribb választ mondja („sikeres”). 71%-os, mégsem kap el egyetlen hibát sem.</td></tr>
+            <tr><td>Pontosság</td><td>A helyes jóslatok aránya.</td></tr>
+            <tr><td>Felidézés</td><td>A valóban bukó hívások hány százalékát találja meg a modell. Itt ez a fontosabb.</td></tr>
+            <tr><td>MAE</td><td>Regressziónál: átlagosan hány ezredmásodpercet téved a jóslat.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>A modell tévesztési mátrixa</h3><p>A 72 bukó hívásból 48-at kap el, 24-et nem. A 178 sikeresből 19-re mondja tévesen, hogy elbukik.</p></div>
+        <div class="card"><h3>Osztályozás és regresszió</h3><p>Az osztályozás kategóriát jósol (sikeres vagy bukik), a regresszió számot (hány ms lesz a válaszidő).</p></div>
+      </div>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 1 perc 37 mp · felirattal</span>
+      <h2 id="h-video">A teljes folyamat és a mérés menete</h2>
+      <video controls preload="metadata" src="media/modell_utmutato_3.mp4" aria-label="Videó: az első modell Colabban és a Junior mérés menete"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Feladatkártya 3” futás mind a 4 tesztje sikeres.</td></tr>
+            <tr><td>Határidő</td><td class="num">1</td><td>Az 1. óra végéig.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: első modellek (feladatkártya #3)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindhárom kérdésre érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="meres" aria-labelledby="h-meres">
+      <div class="callout">
+        <span class="eyebrow warn">2. óra · Junior rangemelő mérés</span>
+        <h2 id="h-meres">40 perc, egyénileg, 10 pont</h2>
+        <p>Ugyanabban a repóban, a <code>meres_junior.ipynb</code> notebookban. Használhatod a saját jegyzeteidet és a <code>modell.ipynb</code>-t; MI-asszisztenst és mások segítségét nem. <b>A Junior ranghoz legalább 6 pont kell.</b></p>
+      </div>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Feladat</th><th scope="col">Mit kell csinálni</th><th scope="col">Pont</th><th scope="col">Ki értékeli</th></tr></thead>
+          <tbody>
+            <tr><td>F1</td><td>Felosztás: 30%, random_state=7, rétegzett</td><td class="num">2</td><td>CI</td></tr>
+            <tr><td>F2</td><td>Döntési fa (max_depth=4, random_state=0): pontosság és felidézés</td><td class="num">2</td><td>CI</td></tr>
+            <tr><td>F3</td><td>Saját modell: felidézés legalább 0,80 és pontosság legalább 0,72</td><td class="num">2</td><td>CI</td></tr>
+            <tr><td>F4</td><td>Regresszió a válaszidőre, MAE 60 ms alatt</td><td class="num">2</td><td>CI</td></tr>
+            <tr><td>F5</td><td>Értékelés 3–4 mondatban: melyik modellt ajánlod, és miért?</td><td class="num">2</td><td>Tanár</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>Beadás:</b> mentés <code>meres_junior.ipynb</code> néven, commitüzenet <code>meres: Junior rangemelő mérés</code>, majd a repó linkje a Teams-feladat „Junior mérés” részébe. A CI-pontokat az Actions fülön, a „Junior mérés” futás tesztlistájában feladatonként látod.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>A felidézés 0,9 körüli a c) lépésben</summary><div><p>A sikeres osztályra számoltad. A bukó hívásokra kell: <code>pos_label=0</code>.</p></div></details>
+      <details><summary>A pontosság nem 0,828</summary><div><p>Hiányzik a <code>stratify=y</code> vagy a <code>random_state=42</code>, vagy kimaradt a <code>StandardScaler</code> a pipeline-ból.</p></div></details>
+      <details><summary>A „Junior mérés” futás piros</summary><div><p>Az 1. órán ez rendben van: a mérést a 2. órán írod meg. A mérés után a piros teszt azt jelenti, hogy az adott feladat (F1–F4) nem teljesült.</p></div></details>
+      <details><summary>AttributeError: 'ellipsis' object …</summary><div><p>Egy TODO még nincs kitöltve: a <code>...</code> helyére írd a megoldást.</p></div></details>
+      <details><summary>„Copy of …” néven mentett</summary><div><p>A fájlnév pontosan <code>modell.ipynb</code> (a mérésnél <code>meres_junior.ipynb</code>) legyen, különben a CI nem találja.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Az 1. óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miért nem mérhetjük a modellt azon az adaton, amelyen tanult?</li>
+        <li>Miért lehet rossz egy 71%-os pontosság ebben a feladatban?</li>
+        <li>Miben más az osztályozás és a regresszió címkéje?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 4. blokk</span><h3 style="margin-top:8px">Neuronok a gépben</h3><p>A logisztikus regresszió valójában egyetlen mesterséges neuron. Jövő héten sok ilyet kötünk össze egy hálóvá, PyTorchban.</p></div>
+    </section>
+  </main>
+</div>
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk3-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

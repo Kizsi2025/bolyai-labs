@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 20. blokk: A záró projekt terve</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../19/" style="color:#B8C4D6;text-decoration:none">← 19. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../21/" style="color:#B8C4D6;text-decoration:none">21. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 20. blokk</span>
+    <h1>A záró projekt terve</h1>
+    <p>Innen indul a projektszakasz. Kiválasztod a záró projektedet (egyedül vagy párban), és megírod a tervét: kinek és mit építesz, mit NEM, hogyan épül fel, mi lehet kockázatos, és blokkonként mi lesz kész. A mai repó lesz a projekted otthona a tanév végéig – kódot a jóváhagyott terv után kezdesz írni.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#20</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Leadás: <b>a 2. óra vége</b></span>
+      <span class="fact">Jóváhagyás: <b>a 21. blokkig</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-20-zaroprojekt">A sablonrepó megnyitása</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/B1GxL5ufbDcSXk5WoXGeV2">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/19/">A 19. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/21/">A 21. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#terv">A jó terv</a>
+    <a href="#katalogus">Projektkatalógus</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#jovahagyas">Jóváhagyás</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="terv" aria-labelledby="h-terv">
+      <span class="eyebrow">1. óra · elmélet</span>
+      <h2 id="h-terv">Előbb a terv, aztán a kód</h2>
+      <p>Egy projekt ritkán a kódon bukik el. Sokkal gyakrabban azért, mert túl nagy, nincs valódi felhasználója, vagy senki sem tudja eldönteni, hogy kész-e. A terv ez ellen véd.</p>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Fejezet</th><th scope="col">Mire felel?</th></tr></thead>
+          <tbody>
+            <tr><td>1. A probléma</td><td>Kinek, milyen gondja van ma, és miért segít itt egy ágens vagy LLM?</td></tr>
+            <tr><td>2. Felhasználói történetek</td><td>„Mint …, szeretném, hogy …, azért, hogy …” – mindegyikhez legalább 2 ellenőrizhető elfogadási feltétel</td></tr>
+            <tr><td>3. Nem-célok</td><td>Mit NEM csinál a program a tanév végéig? Ez tartja kordában a méretet.</td></tr>
+            <tr><td>4. Architektúra</td><td>Mermaid flowchart: a részek és az adatfolyam, rajta az LLM is</td></tr>
+            <tr><td>5. Adatmodell</td><td>Mit tárol a program, és honnan tudja, amit tud?</td></tr>
+            <tr><td>6. Biztonság</td><td>Mit tehet a modell, és mit nem – a 19. blokk rétegei</td></tr>
+            <tr><td>7. Adatvédelem</td><td>Hol vannak a kulcsok (.env)? Kezel-e személyes adatot?</td></tr>
+            <tr class="hl"><td>8. Tesztelési terv</td><td>Mit tesztelsz pytesttel, és hogyan teszteled az LLM-es részt modell nélkül?</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Kell ide egyáltalán LLM?</h3><p>Ha egy képlet vagy egy adatbázis-lekérdezés megoldja, az LLM csak hibázhat. Akkor kell, ha szöveget kell érteni vagy előállítani, vagy az ágensnek kell döntenie arról, melyik eszközt használja. A jóváhagyáskor ezt kérdezzük elsőként.</p></div>
+        <div class="card"><h3>Az elfogadási feltételből teszt lesz</h3><p>Rossz: „a válasz legyen jó”. Jó: „10 házirenden kívüli kérdésből mind a 10-re „Nem tudom” a válasz.” A 25. blokkban ezekből írod a teszteket.</p></div>
+      </div>
+    </section>
+
+    <section id="katalogus" aria-labelledby="h-katalogus">
+      <span class="eyebrow">1. óra · témaválasztás</span>
+      <h2 id="h-katalogus">Projektkatalógus</h2>
+      <p>Választhatsz innen, vagy hozhatsz saját ötletet. A saját ötletben is legyen ágens vagy LLM-integráció, és férjen bele 8 blokkba. Egy fő ★★ projektet vállaljon, egy pár ★★★-ot vagy bővített ★★-ot.</p>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">#</th><th scope="col">Projekt</th><th scope="col">Javasolt építőelemek</th><th scope="col">Nehézség</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><b>Hibajegy-osztályozó</b> – kategória, prioritás, választervezet</td><td>strukturált kimenet, eszközhasználat, memória</td><td>★★</td></tr>
+            <tr><td>2</td><td><b>Kódbíráló ágens</b> – hibák, stílus, biztonsági gondok egy Python-fájlban</td><td>eszközhasználat, kódgenerálás, biztonsági rétegek</td><td>★★★</td></tr>
+            <tr><td>3</td><td><b>Tesztgyár</b> – függvényleírásból tesztek és kód, önjavítással</td><td>kódgenerálás, önjavítás, biztonsági rétegek</td><td>★★★</td></tr>
+            <tr><td>4</td><td><b>Házirend-kalauz</b> – válasz a házirendből, forrással</td><td>RAG, eszközhasználat, memória</td><td>★★</td></tr>
+            <tr><td>5</td><td><b>Teremfoglaló asszisztens</b> – szabad terem, foglalás jóváhagyással</td><td>eszközhasználat, biztonsági rétegek, memória</td><td>★★</td></tr>
+            <tr><td>6</td><td><b>Naplóelemző</b> – szervernaplóból hibajelentés és teendők</td><td>eszközhasználat, RAG, strukturált kimenet</td><td>★★★</td></tr>
+            <tr><td>7</td><td><b>Dokumentációíró csapat</b> – README és API-leírás több ágenssel</td><td>többágens, kódgenerálás, strukturált kimenet</td><td>★★★</td></tr>
+            <tr><td>8</td><td><b>Kérdezz az adatbázistól</b> – magyar kérdésből SQL, csak olvasási joggal</td><td>eszközhasználat, biztonsági rétegek, strukturált kimenet</td><td>★★★</td></tr>
+            <tr><td>9</td><td><b>Kvízgenerátor</b> – jegyzetekből ellenőrzött kvíz</td><td>RAG, strukturált kimenet, önjavítás</td><td>★★</td></tr>
+            <tr><td>10</td><td><b>Okosgyár-riasztáskezelő</b> – szimulált érzékelőadatokból riasztás és teendő</td><td>eszközhasználat, memória, biztonsági rétegek</td><td>★★★</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · 2. óra</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>A projekt repója</h3></div>
+          <div class="stepbody">
+            <p>A <a href="https://github.com/Kizsi2025/bolyai-labs-20-zaroprojekt">sablonrepón</a>: <b>Use this template</b>, név <code>zaro-</code> + osztálykód + sorszám, <b>Public</b>. Párban csak az egyikőtök hozza létre, és a társát meghívja (<b>Settings → Collaborators</b>). Aztán:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>git clone https://github.com/&lt;felhasznalonev&gt;/zaro-13b-07.git
+cd zaro-13b-07
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python tervellenor.py</pre></div>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>projekt.yaml</h3></div>
+          <div class="stepbody">
+            <p>Név és egymondatos leírás; a csapat (1–2 fő, mindenkinek saját szerep); legalább 3 építőelem, köztük egy ágens-elem; elsődleges és tartalék modell; legalább 3 kockázat kezeléssel; mérföldkő minden blokkra (21–28). Ha egy szövegben kettőspont van, tedd idézőjelbe.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>PROJEKTTERV.md</h3></div>
+          <div class="stepbody">
+            <p>Mind a nyolc fejezet, a TODO-k helyén saját szöveggel. Legalább 4 történet „Mint …, szeretném …” mondattal és legalább két „- Elfogadás: …” sorral. Az architektúra Mermaid flowchart, legalább 4 nyíllal, rajta az LLM. A VS Code Markdown-előnézete megrajzolja.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Formai ellenőrzés</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python tervellenor.py</pre></div>
+            <p>Addig javítsd, amíg ezt nem írja: „Formailag kész – mehet jóváhagyásra.” A gép csak azt nézi, hogy minden ki van-e töltve; hogy a terv jó-e, azt a tanár dönti el.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Bírálat</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python terv_biralat.py</pre></div>
+            <p>Ha van kulcsod, az MI-bírálat erősségeket, kockázatokat és három kérdést ad – a jóváhagyáskor ezekre válaszolni tudj. Kulcs nélkül egy másik csapattal nézzétek át egymás tervét a lenti jóváhagyási kérdésekkel.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Leadás</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest -q
+git add projekt.yaml PROJEKTTERV.md
+git commit -m "docs: záró projekt terve (feladatkártya #20)"
+git push</pre></div>
+            <p>Mind a 17 teszt zöld, az Actions fülön a „Projektterv 20” is. A repó linkje a Teams-feladatba – a jóváhagyás a 21. blokk elejéig megérkezik.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">A terv megírása lépésről lépésre</h2>
+      <video controls preload="metadata" src="media/terv_utmutato_20.mp4" aria-label="Videó: a projekt repója, a projekt.yaml, felhasználói történetek, architektúra Mermaidben, formai ellenőrzés, MI-bírálat és leadás"></video>
+    </section>
+
+    <section id="jovahagyas" aria-labelledby="h-jovahagyas">
+      <span class="eyebrow">A 21. blokk elejéig</span>
+      <h2 id="h-jovahagyas">Jóváhagyás</h2>
+      <div class="grid2">
+        <div class="card"><h3>Amit kérdezni fogunk</h3><p>Ki a felhasználó, és ma hogyan oldja meg? Miért kell LLM? Mi lesz kész a 24. blokk végére? Hogyan döntöd el, hogy a T1 kész? Hogyan teszteled modell nélkül? Mit tehet a modell, és mit nem? Párban: melyik rész kié? Mi van, ha nincs kulcs a bemutatón?</p></div>
+        <div class="card"><h3>Három lehetséges döntés</h3><p><b>Jóváhagyva</b> – mehet a fejlesztés. <b>Javítással</b> – egy-két pont pótlása a 21. blokk végéig. <b>Átdolgozandó</b> – a méret vagy az LLM szerepe nem jó: konzultáció, új terv egy héten belül. Kódot csak jóváhagyott vagy „javítással” státuszú terv után kezdesz.</p></div>
+      </div>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Formálisan teljes terv</td><td class="num">2</td><td>A „Projektterv 20” futás mind a 17 tesztje zöld. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Jóváhagyás</td><td class="num">1</td><td>„Jóváhagyva”, vagy „Javítással” és a javítás határidőre megtörtént.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>docs: záró projekt terve (feladatkártya #20)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>Mindkét óra kilépőkérdéseire érdemi válasz, a 2. óra végéig.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A záró projekt és a szóbeli kódvédés a tantárgy értékelésének 40%-a – a mai terv ennek a kiindulópontja.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>„A projekt.yaml nem érvényes YAML”</summary><div><p>Valamelyik szövegben kettőspont van. Tedd az egész értéket idézőjelbe: <code>28: "Béta: minden teszt zöld"</code>.</p></div></details>
+      <details><summary>A merfoldkovek piros, pedig kitöltöttem</summary><div><p>A kulcs puszta szám legyen (<code>21:</code>), ne <code>"21":</code>, és mind a nyolc blokk (21–28) szerepeljen.</p></div></details>
+      <details><summary>A tortenetek piros</summary><div><p>A sor elején legyen „Mint …” és benne „szeretném”, alatta legalább két „- Elfogadás: …” sor; a történet fejléce <code>### T1 …</code>, <code>### T2 …</code>.</p></div></details>
+      <details><summary>Az architektura piros</summary><div><p><code>flowchart</code> (vagy <code>graph</code>), legalább 4 <code>--&gt;</code> nyíl, és egy csomópont, amelynek a nevében ott az „LLM”.</p></div></details>
+      <details><summary>A biztonsag piros</summary><div><p>Írj legalább hármat a 19. blokk rétegei közül: jogosultság, jóváhagyás, szűrés, jelölés, napló – a saját projektedre vonatkoztatva.</p></div></details>
+      <details><summary>Az ellenőrző változatlan teszt piros</summary><div><p>Módosult a <code>tervellenor.py</code>. Állítsd vissza: <code>git checkout tervellenor.py</code>.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">Mindkét óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miért kell a projektedhez ágens vagy LLM? Mi lenne a hagyományos megoldás?</li>
+        <li>Írj egy elfogadási feltételt, amelyről egy teszt el tudja dönteni, hogy teljesül-e!</li>
+        <li>Mi a projekted legnagyobb kockázata, és mit teszel ellene?</li>
+        <li>Mit NEM fog tudni a programod a tanév végén – és miért jó, hogy ezt most leírtad?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 21. blokk</span><h3 style="margin-top:8px">Projektfejlesztés I. – adatmodell, backend és API</h3><p>A jóváhagyott terv alapján indul a fejlesztés: adatmodell, backend- és API-váz, haladási konzultációval.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk20-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>

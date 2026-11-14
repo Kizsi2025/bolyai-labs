@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 29. blokk: Etikai és jogi audit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+.quiz { display: grid; gap: 14px; }
+.qitem { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 0; display: grid; gap: 6px; }
+.qitem legend { font-weight: 600; color: var(--ink); padding: 0 4px; }
+.qitem label { display: block; cursor: pointer; color: var(--body); }
+.fb { margin: 4px 0 0; font-size: 15px; }
+.fb.ok { color: var(--accent); }
+.fb.no { color: var(--warn); }
+.quizbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.quizbar .btn.ghost { color: var(--ink); border-color: var(--line); }
+#quiz-score { font-weight: 700; color: var(--ink); }
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../28/" style="color:#B8C4D6;text-decoration:none">← 28. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../30/" style="color:#B8C4D6;text-decoration:none">30. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 29. blokk · 4. modul</span>
+    <h1>Etikai és jogi audit</h1>
+    <p>A béta működik. Most azt nézed meg, szabad-e így kiadni: kockázati besorolás az AI Act szerint, látható MI-jelzés, személyes adatok, szerzői jog és licencek, a modellt is beleértve. Az eredmény a <code>docs/MEGFELELOSEG.md</code>: őszintén leírja, mi rendben van, és mi teendő még. A blokk végén zárókvíz.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#29</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Kulcs: <b>nem kell</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-29-etika">Az etika-csomag</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/4QB78cWr3MNhpKEsT55EcM">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/28/">A 28. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/30/">A 30. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#besorolas">Kockázati besorolás</a>
+    <a href="#adat">Személyes adatok</a>
+    <a href="#licenc">Szerzői jog, licencek</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#gyakorlo">Gyakorlókvíz</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+  </nav>
+
+  <main>
+    <section id="besorolas" aria-labelledby="h-besorolas">
+      <span class="eyebrow">1. óra · AI Act</span>
+      <h2 id="h-besorolas">Melyik szintbe tartozik a projekted?</h2>
+      <p>Az EU MI-rendelete (AI Act) a kockázat szerint szabályoz. A besorolást a dokumentumban indokolni kell.</p>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szint</th><th scope="col">Oktatási példa</th><th scope="col">Mit jelent?</th></tr></thead>
+          <tbody>
+            <tr><td>Tiltott</td><td>érzelemfelismerés az iskolában, társadalmi pontozás</td><td>nem szabad elkészíteni</td></tr>
+            <tr><td>Nagy kockázatú</td><td>felvétel, a tanulás értékelése, szintfelmérés, vizsgafelügyelet</td><td>szigorú követelmények (2027. december 2-től)</td></tr>
+            <tr class="hl"><td>Átláthatósági kötelezettség</td><td>chatbot, amely diákokkal beszélget</td><td>a felhasználónak tudnia kell, hogy MI-vel beszél – 2026. augusztus 2. óta kötelező</td></tr>
+            <tr><td>Minimális</td><td>játék, spamszűrő</td><td>nincs külön kötelezettség</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout"><span class="eyebrow warn">MI-jelzés</span><p>Ha a projekted beszélget a felhasználóval, írd ki <b>látható helyen, az első kérdés előtt</b>, hogy a válaszokat mesterséges intelligencia állítja össze, és tévedhet. API-nál ez az OpenAPI-leírásba kerül (<code>FastAPI(description=…)</code>).</p></div>
+    </section>
+
+    <section id="adat" aria-labelledby="h-adat">
+      <span class="eyebrow">2. óra · GDPR</span>
+      <h2 id="h-adat">Személyes adatok és kiskorúak</h2>
+      <div class="grid2">
+        <div class="card"><h3>Négy sor a dokumentumban</h3><p><b>Milyen adat:</b> mit tárolsz (a kérdés szövegébe is kerülhet név!). <b>Jogalap:</b> iskolában jellemzően közfeladat – ezt az iskola adatvédelmi tisztviselője dönti el. <b>Megőrzés:</b> meddig. <b>Érintetti jogok:</b> kihez fordulhat, aki törlést kér.</p></div>
+        <div class="card"><h3>Kiskorúak</h3><p>Magyarországon 16 év alatt az online adatkezeléshez szülői hozzájárulás kell. A <b>Gemini API csak 18 év felett</b> használható, és nem lehet kiskorúaknak szóló alkalmazás része: a fejlesztéshez és a bemutatóhoz rendben van, de diákoknak élesíteni így nem lehet.</p></div>
+      </div>
+    </section>
+
+    <section id="licenc" aria-labelledby="h-licenc">
+      <span class="eyebrow">2. óra · Szerzői jog</span>
+      <h2 id="h-licenc">Kié a kód, és mit szabad használni?</h2>
+      <div class="grid2">
+        <div class="card"><h3>Szerzői jog</h3><p>A magyar szerzői jogi törvény szerint szerző csak ember lehet: a pusztán MI által generált rész nem szerzői mű, amit ti alakítotok, az igen. A tudástárba csak saját vagy engedéllyel használt, forrásmegjelölt szöveg kerülhet.</p></div>
+        <div class="card"><h3>Licencek</h3><p><b>Megengedő</b> (MIT, BSD, Apache-2.0): szabad használat a licenc megtartásával. <b>Copyleft</b> (GPL, AGPL): a ráépülő programot is így kell kiadni. A <b>modellnek is van licence</b>: a <code>qwen2.5:3b</code> csak kutatásra és kipróbálásra; a <code>qwen2.5:7b</code> és az <code>1.5b</code> Apache-2.0.</p></div>
+      </div>
+      <div class="code"><button class="copy" type="button">Másolás</button><pre>python megfeleles_futtat.py licencek   <span class="c"># docs/LICENCEK.md – generált</span>
+python megfeleles_futtat.py ellenoriz  <span class="c"># LICENSE, GPL/AGPL, ismeretlen licenc</span></pre></div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · egy sprint</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál. A böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>A csomag bemásolása</h3></div>
+          <div class="stepbody">
+            <p>Töltsd le a <a href="https://github.com/Kizsi2025/bolyai-labs-29-etika">csomagot</a>, és másold a repód gyökerébe. Olvasd el az <code>ETIKA_JOG.md</code>-t.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>Expand-Archive ..\bolyai-labs-29-etika.zip ..\csomag29
+Copy-Item ..\csomag29\bolyai-labs-29-etika\* . -Recurse -Force
+python -m pytest -q</pre></div>
+            <p>Most 7 teszt piros.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>LICENSE és licenclista</h3></div>
+          <div class="stepbody">
+            <p>A GitHubon: <b>Add file → Create new file</b>, a név <code>LICENSE</code>, majd <b>Choose a license template</b> (pl. MIT, mindkét nevetekkel). Utána <code>git pull</code>, és generáld a listát:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python megfeleles_futtat.py</pre></div>
+            <p>Ha GPL vagy ismeretlen licencet jelez, kérdezd meg a tanárt.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>A modell licence</h3></div>
+          <div class="stepbody">
+            <p>Ha a <code>.env</code>-ben vagy a <code>.env.pelda</code>-ban <code>qwen2.5:3b</code> szerepel, cseréld <code>qwen2.5:7b</code>-re (vagy gyengébb gépen <code>qwen2.5:1.5b</code>-re), és töltsd le: <code>ollama pull qwen2.5:7b</code>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>MI-jelzés</h3></div>
+          <div class="stepbody">
+            <p>Webes felületnél az <code>index.html</code>-be, a kérdésmező fölé:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>&lt;p class="mi-jelzes"&gt;A válaszokat &lt;strong&gt;mesterséges intelligencia&lt;/strong&gt; állítja össze, és tévedhet: mindig nézd meg a forrást. Ne írj a kérdésbe nevet vagy más személyes adatot.&lt;/p&gt;</pre></div>
+            <p>API-nál a <code>FastAPI(description=…)</code>-ba írd. Utána: <code>python doksi_futtat.py api</code>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Megfelelőségi dokumentum</h3></div>
+          <div class="stepbody">
+            <p>Töltsd ki a <code>docs/MEGFELELOSEG.md</code> nyolc szakaszát a saját projektedre; minden PÉLDA és ___ eltűnjön. A <b>Besorolás:</b> a négy szint egyike, mellette <b>Indoklás:</b>. Ami nincs kész, az <code>- [ ]</code> teendő. Ha javítottál, jöhet a <code>0.8.1-beta</code> a CHANGELOG-ba és az <code>api.py</code>-ba.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Napló, commit, zárókvíz</h3></div>
+          <div class="stepbody">
+            <p>A <code>HALADAS.md</code> végére: „## 29. blokk – Etikai és jogi audit”, benne <b>Audit:</b> (mit találtatok) és <b>Állapot:</b>. Utána:</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest -q
+git add .
+git commit -m "docs: etikai és jogi audit (feladatkártya #29)"
+git push</pre></div>
+            <p>A zárókvízt a Teamsben töltöd ki; az eredményt írd a naplóba.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">Licencek, MI-jelzés, megfelelőségi dokumentum</h2>
+      <video controls preload="metadata" src="media/etika_utmutato_29.mp4" aria-label="Videó: a csomag bemásolása, LICENSE és licenclista, a modell licence, MI-jelzés a felületen, megfelelőségi dokumentum, minden zöld, commit"></video>
+    </section>
+
+    <section id="gyakorlo" aria-labelledby="h-gyakorlo">
+      <span class="eyebrow">Gyakorlás a zárókvíz előtt</span>
+      <h2 id="h-gyakorlo">Gyakorlókvíz – 10 kérdés</h2>
+      <p>Nem számít bele a pontokba, és a zárókvíz kérdései mások. Jelöld be a válaszokat, aztán nézd meg az eredményt.</p>
+      <form id="quiz" class="quiz"></form>
+      <div class="quizbar"><button class="btn primary" type="button" id="quiz-check">Ellenőrzés</button><button class="btn ghost quiz-reset" type="button" id="quiz-reset">Újra</button><output id="quiz-score" aria-live="polite"></output></div>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Záró projekt” futás minden tesztje zöld, köztük a megfelelőségi szerződés.</td></tr>
+            <tr><td>Megfelelőségi dokumentum</td><td class="num">1</td><td>A <code>MEGFELELOSEG.md</code> a saját projektedről szól, indokolt besorolással, őszinte teendőkkel, és látható az MI-jelzés.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>docs: etikai és jogi audit (feladatkártya #29)</code></td></tr>
+            <tr><td>Zárókvíz</td><td class="num">1</td><td>Legalább 15 helyes válasz a 20-ból.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>„nincs felismerhető LICENSE fájl”</summary><div><p>A fájl neve pontosan <code>LICENSE</code> legyen (kiterjesztés nélkül), a repó gyökerében, és a licenc teljes szövegét tartalmazza. A GitHub sablonja ezt elkészíti.</p></div></details>
+      <details><summary>„a licenclista nem naprakész”</summary><div><p>Futtasd újra: <code>python megfeleles_futtat.py licencek</code>, és commitold a <code>docs/LICENCEK.md</code>-t. Kézzel ne szerkeszd.</p></div></details>
+      <details><summary>Ismeretlen licencet jelez</summary><div><p>Nézd meg a csomag oldalát a PyPI-n vagy a GitHubon. Ha megengedő, írd be a csomag nevét és a licencet a <code>MEGFELELOSEG.md</code> Licencek szakaszába – az ellenőrző ezt elfogadja.</p></div></details>
+      <details><summary>GPL vagy AGPL egy MIT-projektben</summary><div><p>Keress megengedő licencű csomagot ugyanarra, vagy egyeztess a tanárral. Ne töröld a LICENSE-t.</p></div></details>
+      <details><summary>A teszt nem találja az MI-jelzést</summary><div><p>Látható szövegben legyen (nem HTML-megjegyzésben, nem <code>title</code>-ben), és szerepeljen benne a „mesterséges intelligencia”, „MI” vagy „AI” szó.</p></div></details>
+      <details><summary>„maradt kitöltetlen rész”</summary><div><p>Keresd meg a dokumentumban a PÉLDA szót és a <code>___</code> jeleket. Ha valamire nem tudod a választ, írd teendőnek: <code>- [ ] Megkérdezni …</code>.</p></div></details>
+    </section>
+
+    <section id="kovetkezo" aria-labelledby="h-kovetkezo">
+      <div class="card"><span class="eyebrow">Következő alkalom · 30. blokk</span><h3 id="h-kovetkezo" style="margin-top:8px">Demo Day I.</h3><p>A csapatok bemutatják a projektjüket – a bétából, a megfelelőségi dokumentummal a kezükben.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk29-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+
+  var Q = [
+    ["Egy chatbot a menzai étlapról válaszol a diákoknak. Melyik AI Act-szintbe tartozik?", ["tiltott", "nagy kockázatú", "átláthatósági kötelezettség", "egyikbe sem, mert ingyenes"], 2, "Beszélget emberekkel, de nem dönt róluk: tudniuk kell, hogy MI-vel beszélnek."],
+    ["Hol a legjobb helyen az MI-jelzés egy webes felületen?", ["a súgóoldalon", "látható helyen, az első kérdés előtt", "a forráskód megjegyzésében", "a README-ben"], 1, "A felhasználónak a használat előtt kell tudnia, hogy MI válaszol."],
+    ["A projekted MIT licencű, egy függősége BSD-3-Clause. Mi a teendő?", ["semmi különös, mindkettő megengedő", "át kell térni GPL-re", "le kell cserélni a függőséget", "törölni kell a LICENSE-t"], 0, "A BSD megengedő licenc: a licencszöveget meg kell tartani, de nem korlátozza a projektedet."],
+    ["Mit jelent a korlátozott tárolhatóság elve?", ["az adatot csak titkosítva szabad tárolni", "az adatot csak addig őrizzük, ameddig a célhoz kell", "legfeljebb 1 GB adatot szabad tárolni", "az adatot csak az EU-ban szabad tárolni"], 1, "Ezért kell a Megőrzés sor: meddig tartod meg, és mi törli utána."],
+    ["Miért adatvédelmi előny a helyi modell (Ollama)?", ["gyorsabb", "a kérdés nem hagyja el a gépet", "nem kell hozzá licenc", "mindig pontosabb"], 1, "Felhős modellnél a kérdés a szolgáltatóhoz kerül; helyi modellnél nem."],
+    ["Mi történik, ha egy nyilvános repóban nincs LICENSE fájl?", ["bárki szabadon használhatja", "automatikusan MIT", "minden jog a szerzőé marad, mások nem használhatják szabadon", "a GitHub törli a repót"], 2, "Licenc nélkül nincs engedély: a látható kód még nem szabadon használható kód."],
+    ["Melyik Qwen2.5-modell használható Apache-2.0 licenccel?", ["qwen2.5:3b", "qwen2.5:7b", "qwen2.5:72b", "egyik sem"], 1, "A 3b csak kutatásra és kipróbálásra, a 72b saját licencű; a 0.5b, 1.5b, 7b, 14b és 32b Apache-2.0."],
+    ["Iskolai szolgáltatásnál ki dönt az adatkezelés jogalapjáról?", ["a fejlesztő diák", "az iskola, az adatvédelmi tisztviselővel", "a modell szolgáltatója", "a GitHub"], 1, "Az adatkezelő az iskola – a dokumentumban ezt jelezni kell, és egyeztetni."],
+    ["Mi a teendő, ha a dokumentumban valami még nincs kész?", ["kihagyni a szakaszt", "úgy írni, mintha kész lenne", "felírni teendőnek (- [ ] sorként)", "kitörölni a dokumentumot"], 2, "Az őszinte teendőlista a cél: tudjuk, miben nem felelünk még meg."],
+    ["Hogyan készül a docs/LICENCEK.md?", ["kézzel írjuk", "a megfeleles_futtat.py generálja", "a GitHub készíti", "a pip install hozza létre"], 1, "Generált fájl: függőségváltozás után újra kell futtatni, kézzel nem szerkesztjük."]
+  ];
+  var form = document.getElementById("quiz");
+  Q.forEach(function (q, i) {
+    var fs = document.createElement("fieldset"); fs.className = "qitem";
+    var lg = document.createElement("legend"); lg.textContent = (i + 1) + ". " + q[0]; fs.appendChild(lg);
+    q[1].forEach(function (opt, j) {
+      var lab = document.createElement("label");
+      var inp = document.createElement("input"); inp.type = "radio"; inp.name = "q" + i; inp.value = String(j);
+      lab.appendChild(inp); lab.appendChild(document.createTextNode(" " + opt)); fs.appendChild(lab);
+    });
+    var fb = document.createElement("p"); fb.className = "fb"; fb.id = "fb" + i; fs.appendChild(fb);
+    form.appendChild(fs);
+  });
+  document.getElementById("quiz-check").addEventListener("click", function () {
+    var good = 0;
+    Q.forEach(function (q, i) {
+      var sel = form.querySelector('input[name="q' + i + '"]:checked');
+      var fb = document.getElementById("fb" + i);
+      var ok = sel && Number(sel.value) === q[2];
+      if (ok) good++;
+      fb.className = "fb " + (ok ? "ok" : "no");
+      fb.textContent = (ok ? "Helyes. " : (sel ? "Nem egészen. A helyes válasz: " + q[1][q[2]] + ". " : "Nincs válasz. A helyes: " + q[1][q[2]] + ". ")) + q[3];
+    });
+    document.getElementById("quiz-score").textContent = good + "/10 helyes" + (good >= 8 ? " – mehet a zárókvíz!" : " – nézd át a fenti részeket.");
+  });
+  document.getElementById("quiz-reset").addEventListener("click", function () {
+    form.reset();
+    Array.prototype.forEach.call(form.querySelectorAll(".fb"), function (p) { p.textContent = ""; p.className = "fb"; });
+    document.getElementById("quiz-score").textContent = "";
+  });
+})();
+</script>
+</body>
+</html>

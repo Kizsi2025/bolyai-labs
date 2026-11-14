@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bolyai Labs – 22. blokk: Projektfejlesztés II.: ágens és eszközök</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+:root {
+  /* Layout: egy hasábos tanulói oldal, bal oldalon ragadós lépésjelző széles képernyőn */
+  --bg: #f6f4ee;
+  --surface: #fdfcf8;
+  --ink: #10192b;
+  --body: #3e4a5c;
+  --muted: #5b6576;
+  --line: #e2ded3;
+  --accent: #17794a;
+  --accent-soft: #e4f5ea;
+  --warn: #a84b0c;
+  --warn-soft: #f9ece7;
+  --code-bg: #10192b;
+  --code-ink: #f3f1ea;
+  --code-dim: #8fa0b8;
+  --code-hl: #5bd38f;
+  --font-display: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+    --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+    --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1626; --surface: #16213a; --ink: #f1efe8; --body: #c9d2df; --muted: #9aa7ba;
+  --line: #2a3754; --accent: #5bd38f; --accent-soft: #163a2a; --warn: #f0a574; --warn-soft: #3a2418;
+  --code-bg: #0a1120; --code-ink: #f3f1ea; --code-dim: #8fa0b8; --code-hl: #5bd38f;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--body); font: 17px/1.6 var(--font-body); }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { color: var(--ink); font-family: var(--font-display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(34px, 5vw, 54px); font-weight: 700; }
+h2 { font-size: clamp(26px, 3vw, 34px); font-weight: 700; }
+h3 { font-size: 20px; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+code, .mono { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font: 700 13px/1 var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.eyebrow.warn { color: var(--warn); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+header.top { background: var(--code-bg); color: var(--code-ink); }
+header.top .wrap { padding-top: 48px; padding-bottom: 44px; display: grid; gap: 20px; }
+header.top h1 { color: var(--code-ink); }
+header.top .eyebrow { color: var(--code-hl); }
+header.top p { color: #b8c4d6; font-size: 19px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }
+.fact { background: #1c2a42; border-radius: 999px; padding: 8px 16px; font: 600 15px/1.3 var(--font-body); color: var(--code-ink); }
+.fact b { color: var(--code-hl); }
+.toplinks { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 10px; padding: 11px 18px; font: 600 16px/1.2 var(--font-body); text-decoration: none; border: 2px solid transparent; cursor: pointer; }
+.btn.primary { background: #1f9d61; color: #fff; }
+.btn.ghost { border-color: #3a4a68; color: var(--code-ink); }
+
+.layout { display: grid; grid-template-columns: 220px 1fr; gap: 48px; padding-top: 40px; padding-bottom: 64px; }
+nav.toc { position: sticky; top: 20px; align-self: start; display: grid; gap: 4px; font-size: 15px; }
+nav.toc a { color: var(--muted); text-decoration: none; padding: 6px 10px; border-left: 3px solid var(--line); }
+nav.toc a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.story { border-left: 6px solid var(--accent); font-size: 19px; font-style: italic; color: var(--ink); }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.ring { display: grid; gap: 6px; }
+.ring .tag { font: 700 14px/1 var(--font-mono); color: var(--accent); }
+
+.progress { display: flex; align-items: center; gap: 14px; }
+.bar { flex: 1; height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.bar span { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (prefers-reduced-motion: reduce) { .bar span { transition: none; } }
+.progress output { font: 700 15px/1 var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: step; }
+ol.steps > li { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; grid-template-columns: 34px 1fr; gap: 6px 16px; }
+ol.steps > li.done { border-color: var(--accent); background: var(--accent-soft); }
+.check { width: 26px; height: 26px; margin-top: 2px; accent-color: var(--accent); cursor: pointer; }
+.stephead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.stepnum { font: 700 14px/1 var(--font-mono); color: var(--warn); }
+.stepbody { grid-column: 2; display: grid; gap: 10px; }
+
+.code { position: relative; background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 14px 16px; padding-right: 92px; overflow-x: auto; }
+.code pre { margin: 0; font: 15px/1.7 var(--font-mono); white-space: pre; }
+.code .c { color: var(--code-dim); }
+.code .ok { color: var(--code-hl); }
+.copy { position: absolute; top: 10px; right: 10px; background: #24324d; color: var(--code-ink); border: 0; border-radius: 8px; padding: 6px 12px; font: 600 13px/1.2 var(--font-body); cursor: pointer; }
+.copy:hover { background: #2f4063; }
+
+video { width: 100%; border-radius: 14px; border: 1px solid var(--line); background: #10192b; display: block; }
+
+table { width: 100%; border-collapse: collapse; font-size: 16px; }
+.tablebox { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--ink); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--ink); }
+tr.total td { font-weight: 700; color: var(--ink); }
+tr.hl td { background: var(--accent-soft); }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+details[open] { border-color: var(--warn); }
+summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+details > div { margin-top: 10px; display: grid; gap: 10px; }
+
+.callout { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 14px; padding: 20px 22px; display: grid; gap: 10px; }
+.rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.rule { background: var(--code-bg); color: var(--code-ink); border-radius: 14px; padding: 22px 24px; display: grid; gap: 8px; }
+.rule b { font: 700 40px/1 var(--font-display); color: var(--code-hl); }
+.rule p { color: var(--code-ink); font-size: 18px; font-weight: 600; }
+ol.q { margin: 0; padding-left: 22px; display: grid; gap: 8px; font-size: 18px; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); }
+footer .wrap { padding-top: 22px; padding-bottom: 32px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; gap: 32px; }
+  nav.toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.toc a { border: 1px solid var(--line); border-radius: 99px; padding: 4px 12px; }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .grid2, .grid4, .rules { grid-template-columns: 1fr; }
+  ol.steps > li { grid-template-columns: 28px 1fr; padding: 16px; }
+}
+</style>
+</head>
+<body>
+<nav aria-label="Lapozás" style="background:#0A1120;font:600 15px/1.2 'IBM Plex Sans',system-ui,sans-serif;padding:10px 24px;display:flex;justify-content:space-between;gap:16px"><a href="../21/" style="color:#B8C4D6;text-decoration:none">← 21. blokk</a><a href="../../" style="color:#5BD38F;text-decoration:none">Bolyai Labs – a tantárgy nyitóoldala</a><a href="../23/" style="color:#B8C4D6;text-decoration:none">23. blokk →</a></nav>
+<header class="top">
+  <div class="wrap">
+    <span class="eyebrow">Bolyai Labs · Kód-őr · 22. blokk</span>
+    <h1>Projektfejlesztés II.: ágens és eszközök</h1>
+    <p>Fejlesztési sprint a saját projekteden. A 21. blokkban épített LLM-port mögé a valódi ágens kerül: az ágenst, a védelmi rétegeket és az eszköztárat a csomag adja – a te dolgod a projekted eszközei, a bekötés és az ágenstesztek, köztük egy támadással.</p>
+    <div class="facts">
+      <span class="fact">Feladatkártya <b>#22</b></span>
+      <span class="fact">Érték: <b>5 sprintpont</b></span>
+      <span class="fact">Határidő: <b>a 2. óra vége</b></span>
+      <span class="fact">Tesztek: <b>kulcs nélkül</b></span>
+    </div>
+    <div class="toplinks">
+      <a class="btn primary" href="https://github.com/Kizsi2025/bolyai-labs-22-agens">Az ágens-csomag</a>
+      <a class="btn ghost" href="https://claude.ai/artifact/BDGn6bchh2bbK4fvSVoGJm">Az órai diasor</a>
+      <a class="btn ghost" href="../../blokk/21/">A 21. blokk oldala</a>
+      <a class="btn ghost" href="../../blokk/23/">A 23. blokk oldala</a>
+      <a class="btn ghost" href="../../">A tantárgy nyitóoldala</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <nav class="toc" aria-label="Tartalom">
+    <a href="#csomag">A csomag</a>
+    <a href="#szerzodes">Az ágens szerződése</a>
+    <a href="#lepesek">Lépések</a>
+    <a href="#video">Videó</a>
+    <a href="#pontozas">Pontozás</a>
+    <a href="#hibak">Ha elakadsz</a>
+    <a href="#kilepo">Kilépőkérdések</a>
+  </nav>
+
+  <main>
+    <section id="csomag" aria-labelledby="h-csomag">
+      <span class="eyebrow">Sprintcél: az ágens a port mögött, ál-LLM-mel tesztelve</span>
+      <h2 id="h-csomag">Mi kész, és mi a te dolgod?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Fájl</th><th scope="col"></th></tr></thead>
+          <tbody>
+            <tr><td><code>src/app/llm_port.py</code></td><td>frissült: a port eszközt is hív (<code>chat_eszkozokkel</code>); az ál-LLM forgatókönyvet játszik le: <code>AlLLM.hivas(...)</code>, <code>AlLLM.szoveg(...)</code></td></tr>
+            <tr><td><code>src/app/eszkoztar.py</code></td><td>kész: a <code>@ESZKOZTAR.eszkoz(...)</code> díszítő a függvényből eszközleírást készít</td></tr>
+            <tr><td><code>src/app/vedelem.py</code></td><td>kész: jogosultság → paraméterszabály → kiszivárgás-szűrés → emberi jóváhagyás → napló (19. blokk)</td></tr>
+            <tr><td><code>src/app/agens.py</code></td><td>kész: az eszközhasználó ciklus, jelöléssel és lépéskorláttal (12–13. blokk)</td></tr>
+            <tr class="hl"><td><code>src/app/eszkozok.py</code></td><td><b>a te részed:</b> legalább két saját eszköz a „pelda_” helyett</td></tr>
+            <tr class="hl"><td><code>src/app/szolgaltatas.py</code></td><td><b>a te részed:</b> <code>uj_agens(db, llm, jovahagyo=None)</code>, és egy függvény, amely az ágenst használja</td></tr>
+            <tr class="hl"><td><code>tests/test_sajat_agens.py</code></td><td><b>a te részed:</b> legalább 3 ágensteszt ál-LLM-mel, köztük egy támadás</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>A leírás a modellnek szól</h3><p>Az eszköz leírásából dönti el a modell, mikor hívja: írd bele, <b>mit csinál és mikor kell használni</b>. Ami kifelé hat vagy nem visszafordítható (küldés, törlés, módosítás), az <code>veszelyes=True</code> – felügyelet nélkül nem fut le.</p></div>
+        <div class="card"><h3>Mit fogadsz el a modelltől?</h3><p>A mintában (Házirend-kalauz) forrásnak csak az számít, amit a modell idéz <b>és</b> a keresés tényleg visszaadott – a kitalált forrás „Nem tudom” lesz. Gondold végig a saját projektedben: mi az, amit nem hiszel el a modellnek ellenőrzés nélkül?</p></div>
+      </div>
+    </section>
+
+    <section id="szerzodes" aria-labelledby="h-szerzodes">
+      <span class="eyebrow">tests/test_agens_szerzodes.py · nem szabad módosítani</span>
+      <h2 id="h-szerzodes">Az ágens szerződése</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Csoport</th><th scope="col">Mit néz?</th></tr></thead>
+          <tbody>
+            <tr><td>Eszközök</td><td>legalább 2 saját eszköz, érdemi leírással; a „pelda_” lecserélve</td></tr>
+            <tr><td>Összerakás</td><td><code>szolgaltatas.uj_agens(db, llm)</code> védelemmel; minden veszélyes eszköz jóváhagyáshoz kötött; alapból nincs jóváhagyó</td></tr>
+            <tr><td>Viselkedés</td><td>felügyelet nélkül a veszélyes eszköz „MEGTAGADVA”; ismeretlen eszköz nem dönti össze; lépéskorlát; az eredmény adatként jelölve ér vissza</td></tr>
+            <tr><td>Saját munka</td><td>a szolgáltatás használja az ágenst; legalább 3 saját ágensteszt; a HALADAS.md 22. blokkos része</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="lepesek" aria-labelledby="h-lepesek">
+      <span class="eyebrow">Hat lépés · egy sprint</span>
+      <h2 id="h-lepesek">Lépésről lépésre</h2>
+      <p>Pipáld ki, amit már megcsináltál: a böngésződ megjegyzi, hol tartasz.</p>
+      <div class="progress"><div class="bar" aria-hidden="true"><span id="bar"></span></div><output id="count" aria-live="polite">0/6</output></div>
+      <ol class="steps" id="steps">
+        <li>
+          <input class="check" type="checkbox" id="s1" aria-label="1. lépés kész">
+          <div class="stephead"><span class="stepnum">1</span><h3>A csomag bemásolása</h3></div>
+          <div class="stepbody">
+            <p>Töltsd le a <a href="https://github.com/Kizsi2025/bolyai-labs-22-agens">csomagot</a>, és másold a repód gyökerébe, felülírással (GitHubról letöltve a mappa neve <code>…-main</code>). Csak a <code>llm_port.py</code> frissül, a többi új.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>Expand-Archive ..\bolyai-labs-22-agens.zip ..\csomag22
+Copy-Item ..\csomag22\bolyai-labs-22-agens\* . -Recurse -Force
+python -m pytest -q</pre></div>
+            <p>10 piros, a 21. blokk tesztjei zöldek maradnak.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s2" aria-label="2. lépés kész">
+          <div class="stephead"><span class="stepnum">2</span><h3>Saját eszközök</h3></div>
+          <div class="stepbody">
+            <p>Az <code>eszkozok.py</code>-ban legalább két eszköz a projekted tervéből. Az első paraméter neve <code>ctx</code> (a környezet: pl. <code>ctx.db</code>), a többi típusos: <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code> vagy <code>list[str]</code>. A visszatérés szöveg.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s3" aria-label="3. lépés kész">
+          <div class="stephead"><span class="stepnum">3</span><h3>Bekötés: uj_agens</h3></div>
+          <div class="stepbody">
+            <p>Az <code>AGENS.md</code> mintája alapján a <code>szolgaltatas.py</code>-ba: egy <code>Kornyezet</code> osztály, a rendszerüzenet (mikor melyik eszközt használja), és az <code>uj_agens(db, llm, jovahagyo=None)</code> a <code>Vedelem</code>-mel. Aztán egy szolgáltatás-függvény – és rajta át egy végpont – futtassa az ágenst: <code>uj_agens(db, llm).futtat(feladat)</code>.</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s4" aria-label="4. lépés kész">
+          <div class="stephead"><span class="stepnum">4</span><h3>Ágenstesztek, támadással</h3></div>
+          <div class="stepbody">
+            <p>Írd át a <code>tests/test_sajat_agens.py</code>-t: legalább 3 teszt, amelyben a modell lépéseit te írod elő. Az egyik legyen támadás: egy eszközeredménybe rejtett utasítás egy veszélyes eszközt hívatna – ellenőrizd, hogy „MEGTAGADVA”, és nem történt meg.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>llm = AlLLM(lepesek=[AlLLM.hivas("az_eszkozod", parameter="…"), AlLLM.szoveg("A válasz.")])
+e = szolgaltatas.uj_agens(Adatbazis(":memory:"), llm).futtat("A felhasználó kérdése")
+assert e["naplo"][0]["eszkoz"] == "az_eszkozod"</pre></div>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s5" aria-label="5. lépés kész">
+          <div class="stephead"><span class="stepnum">5</span><h3>Élő próba (ha van kulcsod)</h3></div>
+          <div class="stepbody">
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m uvicorn app.api:app --app-dir src --reload</pre></div>
+            <p><code>LLM_AL</code> nélkül a <code>.env</code> modellje dolgozik. A <code>/docs</code> oldalon kérdezz: a modell tényleg a jó eszközt hívja? Ha nem, a leírást és a rendszerüzenetet javítsd. Eszközhívást támogató modell kell (Gemini, vagy Ollamán pl. qwen2.5).</p>
+          </div>
+        </li>
+        <li>
+          <input class="check" type="checkbox" id="s6" aria-label="6. lépés kész">
+          <div class="stephead"><span class="stepnum">6</span><h3>Napló és push</h3></div>
+          <div class="stepbody">
+            <p>A <code>HALADAS.md</code> végére a „## 22. blokk – ágens és eszközök” rész (minta az AGENS.md végén): állapot, elkészült, mérföldkő, következő lépés, akadály, kérdés.</p>
+            <div class="code"><button class="copy" type="button">Másolás</button><pre>python -m pytest -q
+git add src tests HALADAS.md AGENS.md
+git commit -m "feat: ágens és eszközök (feladatkártya #22)"
+git push</pre></div>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <section id="video" aria-labelledby="h-video">
+      <span class="eyebrow">Videó · 2 perc · felirattal</span>
+      <h2 id="h-video">Eszközök, bekötés, támadásos teszt</h2>
+      <video controls preload="metadata" src="media/agens_utmutato_22.mp4" aria-label="Videó: a csomag bemásolása, saját eszközök, uj_agens bekötése, ágensteszt támadással, kipróbálás demómodellel és push"></video>
+    </section>
+
+    <section id="pontozas" aria-labelledby="h-pontozas">
+      <span class="eyebrow">5 sprintpont</span>
+      <h2 id="h-pontozas">Mire jár pont a feladatkártyán?</h2>
+      <div class="tablebox">
+        <table>
+          <thead><tr><th scope="col">Szempont</th><th scope="col">Pont</th><th scope="col">Mikor jár?</th></tr></thead>
+          <tbody>
+            <tr class="hl"><td>Zöld build</td><td class="num">2</td><td>A „Záró projekt” futás minden tesztje zöld: terv, architektúra, az ágens szerződése és a saját tesztjeid. Ha a <code>.env</code> vagy egy kulcs felkerül a GitHubra, ez a pont nem jár.</td></tr>
+            <tr><td>Támadásos teszt és napló</td><td class="num">1</td><td>Legalább egy saját teszt, amely rejtett utasítást próbál, és ellenőrzi, hogy nem történt meg; kitöltött HALADAS.md.</td></tr>
+            <tr><td>Commitüzenet</td><td class="num">1</td><td><code>feat: ágens és eszközök (feladatkártya #22)</code></td></tr>
+            <tr><td>Kilépőkérdések</td><td class="num">1</td><td>A 2. óra végén érdemi válasz.</td></tr>
+            <tr class="total"><td>Összesen</td><td class="num">5</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>A sprint végén 3–4 csapat 90 másodpercben bemutat egy ágensfutást (a napló alapján). Önkéntes – aki bemutat, a 23. blokkban elsőként kap konzultációt.</p>
+    </section>
+
+    <section id="hibak" aria-labelledby="h-hibak">
+      <span class="eyebrow warn">Ha elakadsz</span>
+      <h2 id="h-hibak">A leggyakoribb hibák</h2>
+      <details><summary>TypeError: … nem támogatott típus</summary><div><p>Minden paraméternek legyen típusa: <code>str</code>, <code>int</code>, <code>float</code>, <code>bool</code> vagy <code>list[str]</code>. Az első paraméter neve <code>ctx</code>.</p></div></details>
+      <details><summary>ValueError: Az eszköz neve kisbetűs_alahuzasos legyen</summary><div><p>A függvény neve csak kisbetű, szám és aláhúzás lehet, ékezet nélkül.</p></div></details>
+      <details><summary>test_uj_agens_vedelemmel piros</summary><div><p>Ne kézzel sorold fel a veszélyes eszközöket: <code>veszelyes=ESZKOZTAR.veszelyesek()</code>. A <code>jovahagyo</code> alapértéke <code>None</code> legyen.</p></div></details>
+      <details><summary>Az ál-LLM-es teszt nem áll le, vagy hibát dob</summary><div><p>Minden forgatókönyv végén legyen egy <code>AlLLM.szoveg("…")</code> – ez zárja le az ágens körét.</p></div></details>
+      <details><summary>Élőben a modell nem hívja az eszközt</summary><div><p>Írd a leírásba, mikor kell hívni; a rendszerüzenetbe: „mindig hívd, mielőtt …”. Kis helyi modellnél próbálj nagyobbat.</p></div></details>
+      <details><summary>HTTP 400 … tools</summary><div><p>A választott modell nem támogatja az eszközhívást. Válassz olyat, amelyik igen.</p></div></details>
+    </section>
+
+    <section id="kilepo" aria-labelledby="h-kilepo">
+      <span class="eyebrow">A 2. óra végén · 1 sprintpont</span>
+      <h2 id="h-kilepo">Kilépőkérdések</h2>
+      <ol class="q">
+        <li>Miért fontos az eszköz leírása, és ki olvassa?</li>
+        <li>Mi történik a projektedben, ha egy dokumentumba rejtett utasítás egy veszélyes eszközt hívatna?</li>
+      </ol>
+      <div class="card"><span class="eyebrow">Következő alkalom · 23. blokk</span><h3 style="margin-top:8px">Projektfejlesztés III. – RAG és adatbázis</h3><p>A kulcsszavas keresés helyére darabolás, beágyazás és vektortár kerül (11. blokk), és az adatbázis-kapcsolatok is a helyükre kerülnek.</p></div>
+    </section>
+  </main>
+</div>
+
+
+<footer><div class="wrap">BMSZC Bolyai János Műszaki Technikum és Kollégium · Mesterséges intelligencia és autonóm ágensek a szoftverfejlesztésben · 13. évfolyam · 2026/2027</div></footer>
+
+<script>
+(function () {
+  var KEY = "bolyai-labs-blokk22-lepesek";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll("#steps .check"));
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+  function update() {
+    var done = 0;
+    boxes.forEach(function (b) { b.closest("li").classList.toggle("done", b.checked); if (b.checked) done++; });
+    document.getElementById("bar").style.width = (done / boxes.length * 100) + "%";
+    document.getElementById("count").textContent = done + "/" + boxes.length;
+  }
+  boxes.forEach(function (b) {
+    b.checked = !!saved[b.id];
+    b.addEventListener("change", function () {
+      saved[b.id] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      update();
+    });
+  });
+  update();
+
+  document.querySelectorAll(".copy").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var text = btn.parentElement.querySelector("pre").innerText;
+      var done = function (label) { btn.textContent = label; setTimeout(function () { btn.textContent = "Másolás"; }, 1600); };
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Másolva"); }, function () { done("Jelöld ki"); });
+      } catch (e) { done("Jelöld ki"); }
+    });
+  });
+})();
+</script>
+</body>
+</html>
